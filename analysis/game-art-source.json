@@ -1,0 +1,37 @@
+{
+  "source": "C:\\Users\\MOZKAN\\AppData\\Local\\Programs\\Duplay\\app\\web\\index.html",
+  "source_sha256": "dabdb078d1974cbc5eebcac2e017dd83c7687f7c2fa9cf7d48ff04c5cbe34717",
+  "method": "Exact five base64 JPEG values of shipped Yf object; decoded unchanged; no reference code execution or network.",
+  "files": [
+    {
+      "key": "rdr1",
+      "path": "src/art/rdr1.jpg",
+      "bytes": 97401,
+      "sha256": "6d8a5f51dc01580d112ba44323b2efd30fd9304413b7290514e2c1d74b8f8e9d"
+    },
+    {
+      "key": "mafia",
+      "path": "src/art/mafia.jpg",
+      "bytes": 362079,
+      "sha256": "2a3fa2cef6691e2115d12a51bf47b9280a6e42bcf39922ca6249e73f7f3e0893"
+    },
+    {
+      "key": "blackflag",
+      "path": "src/art/blackflag.jpg",
+      "bytes": 257264,
+      "sha256": "2362d70148b6633583c01d9a475175f7694980d23b5d6b9c2810594504a63d6d"
+    },
+    {
+      "key": "mw4",
+      "path": "src/art/mw4.jpg",
+      "bytes": 101126,
+      "sha256": "78ccc49ab94a76646d9d541c5483ff1a481bc9cf22d0d2da620f06264fea3661"
+    },
+    {
+      "key": "rdr2",
+      "path": "src/art/rdr2.jpg",
+      "bytes": 115108,
+      "sha256": "d0fbdfd970968f3e6486056600486520d80e9dfd3eaf5011eeaa3cc69df501da"
+    }
+  ]
+}

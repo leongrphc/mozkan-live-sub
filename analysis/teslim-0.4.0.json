@@ -1,0 +1,85 @@
+{
+  "version": "0.4.0",
+  "generated_utc": "2026-11-15T18:38:50.819958+00:00",
+  "delivery_complete": true,
+  "installed": "D:\\Duplay-Rebuild\\releases\\AltyaziAtolyesi\\AltyaziAtolyesi.exe",
+  "archive": {
+    "path": "D:\\Duplay-Rebuild\\releases\\AltyaziAtolyesi-0.4.0-portable.zip",
+    "files": 11014,
+    "archive_bytes": 1367142945,
+    "source_bytes": 2356050888
+  },
+  "verification": {
+    "files_verified": 11014,
+    "archive_sha256": "d81c7c1a71ff520b1e46a3ef80f46d9ce2131c959fcc4b7d155104a08c22eb2b",
+    "extracted_to": "analysis\\Portable 0.4.0 check"
+  },
+  "source_update": {
+    "version": "0.4.0",
+    "archive": "D:\\Duplay-Rebuild\\releases\\AltyaziAtolyesi-0.4.0-update.zip",
+    "bytes": 1042062,
+    "sha256": "36c3e5b2da770949ebe4f5f1207a2aaf749f71c6aa2021b2badd6d00f66a35b1",
+    "files": 41,
+    "installed": "D:\\Duplay-Rebuild\\releases\\AltyaziAtolyesi",
+    "backup": "D:\\Duplay-Rebuild\\releases\\AltyaziAtolyesi\\backups\\before-0.4.0-f864fa38d5ef4334ba004548cdd10b73",
+    "installed_hashes_verified": true,
+    "running_process_restarted": false
+  },
+  "root_installed_extracted_patch_hashes_equal": true,
+  "exe_self_test": {
+    "exit_code": 0,
+    "scope": "own extracted040 EXE; same computer; no inference",
+    "exe": "D:\\Duplay-Rebuild\\analysis\\Portable 0.4.0 check\\AltyaziAtolyesi\\AltyaziAtolyesi.exe"
+  },
+  "art_decoder": {
+    "status": "PASS",
+    "runtime": "D:\\Duplay-Rebuild\\analysis\\Portable 0.4.0 check\\AltyaziAtolyesi\\python\\python.exe",
+    "installation": "D:\\Duplay-Rebuild\\analysis\\Portable 0.4.0 check\\AltyaziAtolyesi",
+    "images": [
+      {
+        "key": "mafia",
+        "width": 480,
+        "height": 270
+      },
+      {
+        "key": "blackflag",
+        "width": 480,
+        "height": 480
+      },
+      {
+        "key": "mw4",
+        "width": 480,
+        "height": 270
+      },
+      {
+        "key": "rdr1",
+        "width": 480,
+        "height": 270
+      },
+      {
+        "key": "rdr2",
+        "width": 480,
+        "height": 270
+      }
+    ],
+    "scope": "Own extracted runtime and actual game-card JPEG decoder/cache; no OCR/model/device proof"
+  },
+  "tests": {
+    "count": 198,
+    "seconds": 32.799,
+    "evidence": "tests-0.4.0-release.txt"
+  },
+  "last_native_inference": {
+    "status": "NOT_VERIFIED",
+    "evidence": "native-0.4.0-dev-game-preview.txt",
+    "reason": "90s helper limit under heavy host load; later111MiB free RAM/91%CPU snapshot. Not a successful inference check; cause not proved."
+  },
+  "full_reference_equivalence_proven": false,
+  "known_limits": [
+    "Exact original visual/motion/sound/TV sheet presentation not identical or fully verified.",
+    "Real external game/streaming/DRM/mixedDPI/Samsung physical install+renew/other computer unverified.",
+    "Latest heavy-load inference check timed out; previous039 and earlier040 development inference checks passed."
+  ],
+  "user_requested_delivery_and_end_of_automatic_development": true,
+  "user_process_restarted": false
+}
