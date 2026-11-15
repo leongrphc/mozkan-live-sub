@@ -2,6 +2,12 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
+using System.Reflection;
+
+[assembly: AssemblyTitle("MOZKAN Live Sub")]
+[assembly: AssemblyProduct("MOZKAN Live Sub")]
+[assembly: AssemblyCompany("MOZKAN")]
+[assembly: AssemblyDescription("Yerel ekran altyazısı çevirisi")]
 
 internal static class Launcher
 {
@@ -39,13 +45,13 @@ internal static class Launcher
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 process.WaitForExit();
-                if (process.ExitCode != 0) MessageBox.Show("Uygulama kapandı. Günlük: " + logPath, "Altyazı Atölyesi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (process.ExitCode != 0) MessageBox.Show("Uygulama kapandı. Günlük: " + logPath, "MOZKAN Live Sub", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return process.ExitCode;
             }
         }
         catch (Exception error)
         {
-            MessageBox.Show(error.Message + "\nGünlük: " + logPath, "Altyazı Atölyesi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(error.Message + "\nGünlük: " + logPath, "MOZKAN Live Sub", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 1;
         }
     }

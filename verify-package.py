@@ -19,19 +19,23 @@ with zipfile.ZipFile(args.archive) as archive:
     names = [entry.filename for entry in entries]
     if len(set(name.casefold() for name in names)) != len(names):
         raise SystemExit('Paket çakışan dosya adları içeriyor.')
+    roots = {PurePosixPath(name).parts[0] for name in names if PurePosixPath(name).parts}
+    if len(roots) != 1 or not roots <= {'MOZKANLiveSub', 'AltyaziAtolyesi'}:
+        raise SystemExit('Geçersiz paket kökü.')
+    package_root = roots.pop()
     for entry in entries:
         path = PurePosixPath(entry.filename)
-        if path.is_absolute() or '\\' in entry.filename or ':' in entry.filename or '..' in path.parts or path.parts[0] != 'AltyaziAtolyesi':
+        if path.is_absolute() or '\\' in entry.filename or ':' in entry.filename or '..' in path.parts or not path.parts or path.parts[0] != package_root:
             raise SystemExit('Geçersiz paket yolu: ' + entry.filename)
         if stat.S_ISLNK(entry.external_attr >> 16):
             raise SystemExit('Paket sembolik bağlantı içeriyor.')
-    manifest_name = 'AltyaziAtolyesi/package-manifest.json'
+    manifest_name = package_root + '/package-manifest.json'
     if archive.getinfo(manifest_name).file_size > 16 * 1024 * 1024:
         raise SystemExit('Manifest çok büyük.')
     manifest = json.loads(archive.read(manifest_name))
     expected = {manifest_name}
     for record in manifest:
-        name = 'AltyaziAtolyesi/' + record['path']
+        name = package_root + '/' + record['path']
         if name in expected:
             raise SystemExit('Tekrarlanan manifest girdisi.')
         expected.add(name)

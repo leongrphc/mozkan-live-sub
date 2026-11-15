@@ -170,7 +170,7 @@ class Window(QMainWindow):
                               for key, default in STYLE_DEFAULTS.items()}
         self.overlay.configure(**self.overlay_style)
         self.hud_overlay.configure(**{key:self.overlay_style[key] for key in ('color','opacity','stroke','enabled')})
-        self.setWindowTitle('Altyazı Atölyesi · '+APP_VERSION)
+        self.setWindowTitle('MOZKAN Live Sub · '+APP_VERSION)
         available=QApplication.primaryScreen().availableGeometry()
         self.resize(min(1080,max(480,available.width()-40)),min(900,max(400,available.height()-60)))
         self.setMinimumSize(480, 400)
@@ -1283,9 +1283,9 @@ class Window(QMainWindow):
         if self.startup is not None and not self.startup.gate.is_set() and self.worker and self.worker.is_alive():return
         self.cancel_selection()
         dialog=QDialog(self)
-        dialog.setWindowTitle('Altyazı Atölyesi hakkında')
+        dialog.setWindowTitle('MOZKAN Live Sub hakkında')
         layout=QVBoxLayout(dialog)
-        texts=[f'Altyazı Atölyesi {APP_VERSION}',
+        texts=[f'MOZKAN Live Sub {APP_VERSION}',
                'Canlı OCR, çevrimdışı İngilizce–Türkçe çeviri ve yerel oyun profilleri.',
                'Tek replik güncel altyazıyı gösterir. Diyalog konuşmacı ve önceki repliği birlikte gösterir. Oyun profilleri canlı diyalog ayarından bağımsızdır.',
                'Uygulama hesabı veya lisans sunucusu gerekmez. TV yayını yerel ağdadır; isteğe bağlı Samsung kurulumu kendi cihaz hizmetini kullanır.',
@@ -1740,7 +1740,7 @@ if __name__ == '__main__':
     lock = QLockFile(str(lock_path))
     if not args.self_test and not lock.tryLock(100):
         from PySide6.QtWidgets import QMessageBox
-        QMessageBox.information(None, 'Altyazı Atölyesi', 'Uygulama zaten açık.')
+        QMessageBox.information(None, 'MOZKAN Live Sub', 'Uygulama zaten açık.')
         raise SystemExit(0)
     event_log=None
     log_error=''

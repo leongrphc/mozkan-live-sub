@@ -100,13 +100,13 @@ class OwnedHTTPServer(ThreadingHTTPServer):
                 pass  # Already closed/unconnected sockets still get close().
             request.close()
 
-PAGE = r'''<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Altyazı ekranı</title>
+PAGE = r'''<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MOZKAN Live Sub · TV</title>
 <style>body{margin:0;background:#101d2d;color:white;font:32px system-ui;text-align:center}
 #surface{position:fixed;left:0;right:0;top:0;bottom:0;overflow:hidden}#caption{position:absolute;bottom:10%;left:5%;width:90%;max-height:42%;overflow:auto;white-space:pre-line;word-wrap:break-word;overflow-wrap:anywhere}
 #hud{position:absolute;display:none;box-sizing:border-box;background:rgba(0,0,0,.92);border-radius:.4em;padding:.55em .8em;text-align:left;font-size:24px;font-size:clamp(13px,2.1vw,26px);line-height:1.45;font-weight:700;overflow-wrap:anywhere;white-space:pre-line;overflow:auto}
 .badge{display:inline-block;position:relative;min-width:1.05em;height:1.05em;line-height:1.05em;padding:.12em .18em;margin:0 .12em;border:.06em solid #a3adb9;border-radius:.5em;background:#252a31;text-align:center;vertical-align:middle;font-size:.9em}.badge.plate{border-radius:.2em;min-width:1.7em}.badge.view{text-indent:-9999px;overflow:hidden;width:1.25em}.badge.view:before,.badge.view:after{content:'';position:absolute;width:.48em;height:.48em;border:.1em solid white;left:.2em;top:.16em}.badge.view:after{left:.52em;top:.42em;background:#252a31}
 #pair{position:relative;z-index:2;margin-top:8vh}input,button{font:20px system-ui;padding:10px}#status{position:fixed;top:8px;left:15%;width:70%;font:14px system-ui;pointer-events:none}#edit{display:none;position:fixed;top:8px;right:8px;font:14px system-ui}</style>
-<div id="surface"><div id="caption" tabindex="0" aria-label="Altyazı"></div><div id="hud" tabindex="0" aria-label="Görev metni"></div></div><div id="pair"><h2>Altyazı ekranı</h2><input id="token" placeholder="Eşleştirme kodu" autocomplete="off" spellcheck="false"><button id="connect">Bağlan</button></div><p id="status"></p><button id="edit">Kodu değiştir</button>
+<div id="surface"><div id="caption" tabindex="0" aria-label="Altyazı"></div><div id="hud" tabindex="0" aria-label="Görev metni"></div></div><div id="pair"><h2>MOZKAN Live Sub</h2><input id="token" placeholder="Eşleştirme kodu" autocomplete="off" spellcheck="false"><button id="connect">Bağlan</button></div><p id="status"></p><button id="edit">Kodu değiştir</button>
 <script>
 let socket,timer,retry,attempt=0,generation=0,captionRevision=0,hudBox=null;
 const caption=document.querySelector('#caption'),hud=document.querySelector('#hud'),surface=document.querySelector('#surface');
@@ -364,7 +364,7 @@ class TV:
                 raise ValueError('Önce TV yayınını açın.')
             if not any(client.state==State.OPEN for client in self.clients):
                 raise ValueError('Henüz bağlı bir alıcı yok; TV tarayıcısından bağlanın.')
-            self._publish('Altyazı Atölyesi bağlantısı hazır.',None)
+            self._publish('MOZKAN Live Sub bağlantısı hazır.',None)
 
     def publish_hud(self, text,box=None):
         text=_text(text)

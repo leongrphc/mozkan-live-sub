@@ -1,4 +1,8 @@
-# Altyazı Atölyesi — kalıcı proje hafızası
+# MOZKAN Live Sub — kalıcı proje hafızası
+
+## Güncel ürün adı: MOZKAN Live Sub
+
+Kullanıcı bu adı seçti. Kaynak arayüz, TV alıcısı, C# başlatıcı bilgileri ve yeni paket kökü güncellendi; yeni başlatıcı `MOZKANLiveSub.exe`. Eski teslim ZIP'leri, sürüm notları ve `TESLIM.md` tarihsel kayıttır. `%LOCALAPPDATA%\AltyaziAtolyesi` ayar/günlük dizini, tek örnek kilidi ve tanılama şeması uyumluluk için korunur. Kullanıcının çalışan uygulamasına ve kurulu eski teslim klasörüne dokunulmaz. Bu ad değişikliği test çalıştırma veya listedeki diğer işleri başlatma talimatı değildir.
 
 ## 15 Kasım 2026 — teslim sonrası kullanıcı kararı
 
@@ -6,7 +10,7 @@
 - Kullanıcı bütün testleri kendisinin yapacağını, Codex'in test çalıştırmasına gerek olmadığını belirtti. Bundan sonraki test sorumluluğu kullanıcıdadır; mevcut test dosyaları ve eski kanıtlar korunur.
 - Güncel istek: test dışındaki bitirme işlerini listele, MOZKAN nickine dayalı isimler öner ve Git commitlerini oluştur. Bu istek listedeki tüm özellikleri otomatik geliştirmeye başlama talimatı değildir.
 - Klasörde Git deposu yoktu. Mevcut teslim kaynakları, dokümanlar ve seçili tarihsel kanıtlarla main dalında ilk commit oluşturuldu. Eski sürümler adına geriye dönük yapay commit üretilmedi.
-- İsim henüz seçilmedi; ürün, EXE, ayar dizini ve paket adları değiştirilmedi. Kalan kapsam ve isim adayları BITIRME-PLANI.md içindedir.
+- Bu görüşmenin devamında kullanıcı **MOZKAN Live Sub** adını seçti. Kalan kapsam BITIRME-PLANI.md içindedir.
 
 Son kayıt: 15 Kasım 2026. Kullanıcı, buraya kadarki gelişmelerin kaydedilmesini ve ileride “devam et” dediğinde bu bilgiyle çalışılmasını istedi. Bu kayıt bir geliştirme başlatma talimatı değildir.
 

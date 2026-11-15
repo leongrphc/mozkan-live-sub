@@ -6,7 +6,7 @@ Kullanıcı YouTube videosunda güzel çalıştığını bildirdi. Bütün testl
 
 ## Test dışındaki işler
 
-1. **Ürün adını seçmek ve uygulamak.** Seçimden sonra pencere/Hakkında metinleri, başlatıcı ve EXE bilgileri, betikler, yeni paket adları ve güncel belgeler birlikte değiştirilecek. Mevcut kullanıcı ayarlarına erişim korunacak; eski teslim ZIP'leri ve tarihsel belgeler yeniden adlandırılmayacak.
+1. **Ürün adı: MOZKAN Live Sub olarak seçildi ve kaynaklara uygulandı.** Pencere/Hakkında, TV alıcısı, başlatıcı bilgileri, derleme çıktısı ve yeni paket kökü güncellendi. Mevcut ayar/günlük dizini ve tek örnek kilidi korunur. Eski teslim ZIP'leri ve tarihsel belgeler yeniden adlandırılmaz. Yeni adla tam taşınabilir paket, son teslim maddesinde hazırlanacak.
 2. **Referans arayüzdeki açık sunum farklarını tamamlamak.** Ekran geçişleri/animasyonlar, isteğe bağlı tuş sesleri ve TV bağlantı sayfasının yerleşim/durum sunumu son kayıtta açık kalmıştır. Yeni isimle korunacak görsel yön belirlenerek uygulanacak; özgün üründeki her ayrıntının zorunlu olup olmadığı kapsam kararıdır.
 3. **Pencere ve gezinme ayrıntılarını kapatmak.** Modal açılış/kapanış, geri/Esc, odak ve klavye gezinmesindeki referansla açık kalan davranışlar kaynak üzerinden karşılaştırılıp somut farklar düzeltilecek. Kayıtlarda kesinleşmiş hata olmayan noktalara varsayımsal düzeltme yapılmayacak.
 4. **Kullanıcının bildireceği somut sorunları çözmek.** Oyun yükünde gecikme, OCR/çeviri, DPI, TV veya Samsung akışında sorun bildirilirse ilgili kod düzeltilecek. Bunlar şu anda kesinleşmiş geliştirme eksikleri değildir; test bekleyen alanlardır. Yeni model veya hız optimizasyonu peşinen zorunlu sayılmaz.
@@ -26,7 +26,7 @@ Yerel/çevrimdışı Windows kapsamı korunur. Hesap, lisans/güncelleme sunucus
 - **MOZKAN Live:** Canlı kullanımı vurguluyor, çeviri işlevi için alt açıklama gerekir.
 - **MOZKAN Ekran:** Türkçe ve geniş kapsamlı; çeviri işlevi için alt açıklama gerekir.
 
-Bunlar yaratıcı önerilerdir; marka veya alan adı uygunluğu araştırılmadı. Seçim yapılmadan yeniden adlandırma uygulanmayacak.
+Bunlar geçmiş isim önerileridir. Kullanıcı **MOZKAN Live Sub** adını seçti; marka veya alan adı uygunluğu araştırılmadı.
 
 ## Git başlangıcı
 

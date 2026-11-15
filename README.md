@@ -1,4 +1,6 @@
-# Altyazı Atölyesi — taşınabilir 0.4.0
+# MOZKAN Live Sub — yerel altyazı çevirisi
+
+Yeni ürün adı **MOZKAN Live Sub**, başlatıcı `MOZKANLiveSub.exe` dosyasıdır. Çekirdek sürüm 0.4.0'dır. Eski teslim arşivleri ve `TESLIM.md` tarihsel 0.4.0 kaydı olarak korunur. İsim geçişi için `REBRAND.md` dosyasına bakın. Mevcut ayar, günlük, tek örnek kilidi ve tanılama biçiminin uyumluluk adları korunmuştur.
 
 Bağımsız yazılmış Python/Qt uygulaması. Bölge seçimi, ekran OCR, yerel İngilizce–Türkçe çeviri, tarayıcıda dizi/film izleme modu, oyun profilleri, diyalog görünümü ve TV tarayıcı alıcısı içerir. Henüz Duplay ile tam özellik eşdeğerliği doğrulanmadı.
 
@@ -10,7 +12,7 @@ PowerShell içinde:
 & D:\Duplay-Rebuild\start.ps1
 ```
 
-Alternatif: `AltyaziAtolyesi.exe` dosyasına çift tıklayın. Başlatıcı yalnızca aynı klasördeki `python/pythonw.exe`, `models/` ve `src/` yollarını kullanır; eski Duplay kurulumuna geri dönüş yoktur. Açılış günlüğü `%LOCALAPPDATA%\AltyaziAtolyesi\startup.log` dosyasındadır. Uygulama tek örnek kilidiyle çalışır.
+Alternatif: `MOZKANLiveSub.exe` dosyasına çift tıklayın. Başlatıcı yalnızca aynı klasördeki `python/pythonw.exe`, `models/` ve `src/` yollarını kullanır; eski Duplay kurulumuna geri dönüş yoktur. Açılış günlüğü `%LOCALAPPDATA%\AltyaziAtolyesi\startup.log` dosyasındadır. Uygulama tek örnek kilidiyle çalışır.
 
 Python runtime, modeller ve oyun profilleri proje klasörüne yerel olarak kopyalandı. Kendi kodu orijinal uygulama modüllerini import etmez. Yeni bilgisayarda Python kurulması gerekmez; EXE, `python`, `src`, `models` ve isteğe bağlı `game_profiles`/`samsung` klasörleri birlikte taşınmalıdır. Başka Windows bilgisayarında henüz doğrulanmadı. Hazır runtime'ı yeniden oluşturmak için `prepare-runtime.ps1 -SourceInstallation KURULUM_KLASORU`; yerel taşınabilir arşiv üretmek için `python/python.exe package.py --output releases/YENI_PAKET.zip` çalıştırılır. Paket her dosyanın SHA-256 kimliğini `package-manifest.json` içinde tutar. `package.py` var olan arşivin üzerine yazmaz.
 
