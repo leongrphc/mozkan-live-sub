@@ -1,5 +1,7 @@
 # MOZKAN Live Sub — isim geçişi
 
+Bu bölüm 15 Kasım 2026’daki isim değişikliğinin kaydıdır. Sonraki 0.4.1 paketlemesi ve güncel geçiş talimatları `TESLIM-MOZKAN.md` ve `GUNCELLEME.md` içindedir.
+
 Kullanıcının seçimiyle ürün adı Altyazı Atölyesi yerine **MOZKAN Live Sub** oldu. Çekirdek sürüm 0.4.0 olarak kaldı; bu ad değişikliği yeni bir işlev sürümü veya yeni test sonucu değildir.
 
 - Güncel kaynak klasöründen açılış: `MOZKANLiveSub.exe` veya `start.ps1`.

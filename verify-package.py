@@ -34,6 +34,14 @@ with zipfile.ZipFile(args.archive) as archive:
         raise SystemExit('Manifest çok büyük.')
     manifest = json.loads(archive.read(manifest_name))
     expected = {manifest_name}
+    update_name = package_root + '/update-manifest.json'
+    if update_name in names:
+        if archive.getinfo(update_name).file_size > 16 * 1024 * 1024:
+            raise SystemExit('Güncelleme manifesti çok büyük.')
+        update = json.loads(archive.read(update_name))
+        if update.get('version') != '0.4.1' or update.get('files') != manifest or update.get('from_versions') != ['0.4.0']:
+            raise SystemExit('Güncelleme manifesti paket kapsamıyla farklı.')
+        expected.add(update_name)
     for record in manifest:
         name = package_root + '/' + record['path']
         if name in expected:

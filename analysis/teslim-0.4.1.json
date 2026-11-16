@@ -1,0 +1,83 @@
+{
+  "version": "0.4.1",
+  "product": "MOZKAN Live Sub",
+  "generated_utc": "2026-11-16T17:15:11.608937+00:00",
+  "implementation_and_packaging_complete": true,
+  "user_acceptance": "PENDING",
+  "full_reference_equivalence_proven": false,
+  "source_commit": "1d0e752",
+  "source_version": "0.4.1",
+  "archive": {
+    "path": "D:\\Duplay-Rebuild\\releases\\MOZKANLiveSub-0.4.1-portable-r1.zip",
+    "files": 11021,
+    "archive_bytes": 1367107975,
+    "source_bytes": 2356067821,
+    "sha256": "7ae49eaf86db158cbb5dcd5c76e9c37639d6fc679f3a24a33bbe18f2032defe2",
+    "all_manifest_entries_verified": true,
+    "extracted": false
+  },
+  "source_update": {
+    "path": "D:\\Duplay-Rebuild\\releases\\MOZKANLiveSub-0.4.1-update.zip",
+    "files": 68,
+    "archive_bytes": 1097025,
+    "sha256": "926b5a65967f4cfc8311053db917a53c35e284a9e42e68720d842f819e1d2a58",
+    "all_manifest_entries_verified": true,
+    "from_versions": [
+      "0.4.0"
+    ],
+    "installed": false,
+    "installer_runtime_tested": false
+  },
+  "root_full_update_payload_hashes_equal": true,
+  "unchanged_core_from_rebrand_commit": [
+    "capture.py",
+    "engine.py",
+    "recognition.py",
+    "subtitle_ocr.py",
+    "translation_backend.py",
+    "profiles.py",
+    "tv.py",
+    "overlay.py",
+    "hud.py"
+  ],
+  "validation": {
+    "python_syntax_files": 36,
+    "powershell_syntax_parsed": true,
+    "static_review": "static-review-0.4.1.json",
+    "application_started": false,
+    "tests_run": false,
+    "exe_self_test_run": false,
+    "reason": "User owns tests; explicit prior preference retained"
+  },
+  "running_user_process_restarted": false,
+  "old_installation_modified": false,
+  "settings_modified": false,
+  "folders_deleted": false,
+  "preserved": [
+    "0.4.0 and older archives",
+    "installed AltyaziAtolyesi directory and backups",
+    "LocalAppData settings/imported games/logs",
+    "analysis reports and extracted evidence"
+  ],
+  "reference": {
+    "original_installation_available": false,
+    "evidence": [
+      "ui-reference-source-0.3.5.json",
+      "reference-action-audit-0.3.8.json",
+      "reference-ui-render-040-stable/report.json"
+    ]
+  },
+  "known_limits": [
+    "New UI/audio/keyboard/update installer not runtime tested at user request",
+    "No final live OCR/translation proof for 0.4.1",
+    "Physical TV/Samsung, DRM, mixed DPI and other computer remain unverified",
+    "Exact original visuals/motion/sound are not claimed identical"
+  ],
+  "documentation": [
+    "README.md",
+    "UPDATE-0.4.1.md",
+    "TESLIM-MOZKAN.md",
+    "GUNCELLEME.md"
+  ],
+  "delivery_candidate_not_for_use": "MOZKANLiveSub-0.4.1-portable.zip; superseded by r1 after final focus guard correction"
+}

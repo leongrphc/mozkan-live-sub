@@ -1,5 +1,16 @@
 # MOZKAN Live Sub — kalıcı proje hafızası
 
+## 16 Kasım 2026 — kullanıcı geliştirmeyi açıkça yeniden başlattı
+
+Kullanıcı “goal başlatıp devam et bunları yapalım her şey okey olana kadar durma” dedi. BITIRME-PLANI.md kapsamındaki uygulama ve paketleme işleri tamamlandı; kullanıcı kabulü henüz bekleniyor. Önceki otomatik geliştirme durdurma kararı bu açık istekle kaldırıldı; eski bölümlerdeki durdurma talimatları tarihsel bağlamdır. Kullanıcının testleri kendisi yapacağı tercihi değişmedi; test veya uygulama çalıştırma.
+
+Kaynak sürümü 0.4.1; arayüz commit’i `99b64c0`, son odak düzeltmesi `1d0e752`. Kalan eski ana ekran marka yazısı düzeltildi; Çeviri/TV/Samsung sekmeleri, TV durum/adres/kod ve geri bildirim sunumu, modal ayar penceresinde ortak yakalama dışlama kontrolü, geri/Esc ve odak ayrıntıları, dar form satırları, 160 ms sayfa geçişi/azaltılmış hareket ve varsayılan kapalı yerel menü sesi uygulandı. Kaynak sözdizimi incelendi; çalışma zamanı başarısı iddiası yok.
+
+Yeni adla tam paket `releases/MOZKANLiveSub-0.4.1-portable-r1.zip` (1.367.107.975 bayt / 11.021 dosya), küçük güncelleme `releases/MOZKANLiveSub-0.4.1-update.zip` (1.097.025 bayt / 68 dosya) hazır. Tüm manifest girdileri ve kaynak/tam paket/güncelleme ortak yük hash’leri doğrulandı; uygulama/EXE/test çalıştırılmadı. Kesin yeni teslim kaydı `analysis/teslim-0.4.1.json`; 0.4.0 JSON ve ZIP’leri korunur. Kullanıcı uygulamasına yerinde güncelleme uygulanmaz; yeni paket sunulur. Kullanıcı kabulü henüz yok. İlk `MOZKANLiveSub-0.4.1-portable.zip` adayı son odak düzeltmesinden öncedir; nihai tam paket yalnız `portable-r1.zip` dosyasıdır. Eski/yeni ZIP’lerin üzerine yazılmadı. Yeni bir hata veya kullanıcı geri bildirimi olmadan tekrar paket veya gereksiz geliştirme döngüsü başlatma.
+
+Özgün `C:\Users\MOZKAN\AppData\Local\Programs\Duplay` kurulumu artık yok; mevcut kaynak alıntıları ve raporlar referanstır. Tam eşdeğerlik iddia etme. Klasör boyutu 32.242.558.089 bayt (~30,03 GiB) ölçüldü: 7 açılmış portable kontrol kopyası ~15,42 GiB, eski ZIP’ler ~10,18 GiB. Silinebilir kopyalar kullanıcıya listelendi, bu çalışmada hiçbir klasör silinmedi.
+
+
 ## Güncel ürün adı: MOZKAN Live Sub
 
 Kullanıcı bu adı seçti. Kaynak arayüz, TV alıcısı, C# başlatıcı bilgileri ve yeni paket kökü güncellendi; yeni başlatıcı `MOZKANLiveSub.exe`. Eski teslim ZIP'leri, sürüm notları ve `TESLIM.md` tarihsel kayıttır. `%LOCALAPPDATA%\AltyaziAtolyesi` ayar/günlük dizini, tek örnek kilidi ve tanılama şeması uyumluluk için korunur. Kullanıcının çalışan uygulamasına ve kurulu eski teslim klasörüne dokunulmaz. Bu ad değişikliği test çalıştırma veya listedeki diğer işleri başlatma talimatı değildir.
@@ -12,13 +23,13 @@ Kullanıcı bu adı seçti. Kaynak arayüz, TV alıcısı, C# başlatıcı bilgi
 - Klasörde Git deposu yoktu. Mevcut teslim kaynakları, dokümanlar ve seçili tarihsel kanıtlarla main dalında ilk commit oluşturuldu. Eski sürümler adına geriye dönük yapay commit üretilmedi.
 - Bu görüşmenin devamında kullanıcı **MOZKAN Live Sub** adını seçti. Kalan kapsam BITIRME-PLANI.md içindedir.
 
-Son kayıt: 15 Kasım 2026. Kullanıcı, buraya kadarki gelişmelerin kaydedilmesini ve ileride “devam et” dediğinde bu bilgiyle çalışılmasını istedi. Bu kayıt bir geliştirme başlatma talimatı değildir.
+Önceki devam kaydı: 15 Kasım 2026. Kullanıcı, buraya kadarki gelişmelerin kaydedilmesini ve ileride “devam et” dediğinde bu bilgiyle çalışılmasını istedi. Bu kayıt bir geliştirme başlatma talimatı değildir.
 
 ## Önce bilinmesi gereken durum
 
 - Çalışılan proje **D:\Duplay-Rebuild**. **D:\REA ayrı araç deposudur; ürün değişikliklerini oraya yapma.**
 - Referans: `C:\Users\MOZKAN\AppData\Local\Programs\Duplay\Duplay.exe` ve aynı kurulumdaki `app` kaynakları/varlıkları. REA ve reverse-engineer-anything becerisi önceki incelemelerde kullanıldı. Tam ürün kaynakları eldeyken normal kaynak incelemesi için yeniden REA kurulumu/doctor çalıştırmak gerekmez.
-- **Son teslim sürümü 0.4.0**; kaynak `src/main.py` içinde `APP_VERSION='0.4.0'`.
+- **Önceki teslim sürümü 0.4.0**; güncel kaynak ve paket 0.4.1’dir. Son kayıt bu dosyanın üst bölümünde ve `analysis/teslim-0.4.1.json` içindedir.
 - Kullanıcı yaklaşık dokuz saatlik otomatik çalışma sonunda **“artık bitir şu goali teslim et bana”** dedi. Paket teslim edildi ve otomatik goal **paused** durumuna alındı. Yeni bir açık devam isteği olmadan otomatik geliştirme başlatma.
 - Tam özellik/davranış/görsel eşdeğerlik kanıtlanmadı. Teslim edilmiş olması yüzde100 tamamlanmış olduğu anlamına gelmez.
 - Sohbette verilen **%80–85 yalnız kaba hazırlık tahminidir**, ölçülmüş tamamlanma/çeviri kalitesi puanı değildir.

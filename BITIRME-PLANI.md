@@ -1,5 +1,18 @@
 # Teslim sonrası bitirme kapsamı
 
+## 16 Kasım 2026 — 0.4.1 bitirme çalışması
+
+Kullanıcı açıkça goal başlatıp kalan işleri sürdürmeyi istedi. Önceki durdurma kararı bu kapsam için kaldırıldı; testleri kullanıcı üstlenme tercihi sürüyor.
+
+- Marka tutarlılığı: tamamlandı; ana ekranın kalan eski marka yazısı da düzeltildi.
+- Arayüz sunumu: TV bağlantısı ayrı sekmede durum/adres/kod/adımlar ve işlem geri bildirimiyle düzenlendi; Samsung isteğe bağlı ayrı sekmede. Kısa sayfa geçişi, azaltılmış hareket tercihi ve varsayılan kapalı yerel menü sesi uygulandı.
+- Pencere/gezinme: ayar penceresi modal ve ortak yakalama dışlama kontrolünde; geri/Esc, oyun aramasından listeye geçiş, dar form satırları ve odak dönüşleri düzenlendi.
+- Kullanıcının bildirdiği açık teslim engelleyici hata yok. Gerçek kullanım/cihaz kontrolleri ve kabul kullanıcıya ait; gelecekte bildirilecek sorunlar çözülmüş sayılmaz.
+- Yeni adla 0.4.1 tam paket (`MOZKANLiveSub-0.4.1-portable-r1.zip`), küçük güncelleme ve belgeler hazır; kesin boyut/hash ve sınır kaydı `analysis/teslim-0.4.1.json`. Tüm manifest girdileri ve ortak kaynak/paket yükleri doğrulandı. Kullanıcı kabulü bekleniyor.
+
+Özgün kurulum artık kayıtlı konumda yok. Kaynak alıntıları ve tarihsel inceleme kayıtlarıyla çalışıldı; tam görsel/işlevsel eşdeğerlik kanıtlanmadı. Uygulama veya test çalıştırılmadı. Aşağıdaki 15 Kasım listesi başlangıç kapsamının tarihsel kaydıdır.
+
+
 15 Kasım 2026. Temel sürüm: teslim edilmiş 0.4.0. Bu dosya geliştirme listesi ve isim önerisidir; uygulama talimatı veya tamamlanma kanıtı değildir.
 
 Kullanıcı YouTube videosunda güzel çalıştığını bildirdi. Bütün testleri kullanıcı üstleniyor; Codex test çalıştırmayacak. Önceki 198 test sonucu tarihsel teslim kanıtıdır.
