@@ -70,6 +70,8 @@ class Settings:
             'mode': lambda v: isinstance(v, str) and v in ('screen', 'movie'),
             'selection_scope': lambda v: isinstance(v, str) and v in ('subtitle', 'video'),
             'fallback': lambda v: type(v) is bool,
+            'ui_sounds': lambda v: type(v) is bool,
+            'reduced_motion': lambda v: type(v) is bool,
             'ignore_speaker':lambda v:type(v) is bool,
             'dialogue': lambda v: type(v) is bool,
             'hud_enabled':lambda v:type(v) is bool,

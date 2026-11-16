@@ -22,7 +22,7 @@ from PySide6.QtGui import QColor, QPainter, QPen, QFont, QFontDatabase, QDesktop
 from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QLabel,
     QPushButton, QVBoxLayout, QHBoxLayout, QPlainTextEdit, QComboBox,
     QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QLineEdit, QDialog, QFormLayout,
-    QDialogButtonBox, QColorDialog,QScrollArea,QProgressBar)
+    QDialogButtonBox, QColorDialog,QScrollArea,QProgressBar,QTabWidget)
 from settings import Settings
 from tv import TV
 from coordinates import capture_region, normalized_region
@@ -42,8 +42,9 @@ from capture_exclusion import try_capture_exclusion
 from manual_capture import capture_image as grab_image,save_image,save_json
 from startup import Startup,CaptureProgress,CaptureFailure,ChildStop
 from app_log import AppLog
+from presentation import ResponsiveRow,system_reduced_motion
 
-APP_VERSION='0.4.0'
+APP_VERSION='0.4.1'
 
 
 class Events(QObject):
@@ -181,7 +182,7 @@ class Window(QMainWindow):
         title.setStyleSheet('font-size:26px;font-weight:600')
         layout.addWidget(title)
         layout.addWidget(QLabel('Altyazı bölgesini seç. Çeviriyi ekranın üzerinde gör.'))
-        mode_row = QHBoxLayout()
+        mode_row = ResponsiveRow(root)
         self.mode = QComboBox()
         self.mode.addItem('Oyun / ekran', 'screen')
         self.mode.addItem('Dizi / film · Tarayıcı videosu', 'movie')
@@ -213,7 +214,7 @@ class Window(QMainWindow):
         self.reselect_button = QPushButton('Alanı yeniden seç')
         self.reselect_button.clicked.connect(self.reselect)
         layout.addWidget(self.reselect_button)
-        options = QHBoxLayout()
+        options = ResponsiveRow(root)
         self.profile = QComboBox()
         self.profile.setMinimumContentsLength(24)
         self.profile.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
@@ -233,7 +234,7 @@ class Window(QMainWindow):
         self.ignore_speaker=QCheckBox('Eşleştirmede konuşmacı adlarını yok say')
         self.ignore_speaker.setChecked(self.settings.values.get('ignore_speaker',True))
         layout.addWidget(self.ignore_speaker)
-        ocr_options=QHBoxLayout()
+        ocr_options=ResponsiveRow(root)
         ocr_options.addWidget(QLabel('Altyazı OCR'))
         self.ocr_quality=QComboBox()
         self.ocr_quality.addItem('Hızlı · uyarlamalı','fast')
@@ -252,7 +253,7 @@ class Window(QMainWindow):
         ocr_options.addWidget(self.ocr_interval)
         ocr_options.addStretch()
         layout.addLayout(ocr_options)
-        observation_row=QHBoxLayout()
+        observation_row=ResponsiveRow(root)
         self.ocr_info=QLabel('Altyazı OCR: kapalı')
         self.hud_ocr_info=QLabel('Görev OCR: kapalı')
         for label in (self.ocr_info,self.hud_ocr_info):
@@ -260,7 +261,7 @@ class Window(QMainWindow):
             label.setWordWrap(True)
             observation_row.addWidget(label,1)
         layout.addLayout(observation_row)
-        translation_row=QHBoxLayout()
+        translation_row=ResponsiveRow(root)
         self.translation_info=QLabel('Altyazı çevirisi: kapalı')
         self.hud_translation_info=QLabel('Görev çevirisi: kapalı')
         for label in (self.translation_info,self.hud_translation_info):
@@ -268,7 +269,7 @@ class Window(QMainWindow):
             label.setWordWrap(True)
             translation_row.addWidget(label,1)
         layout.addLayout(translation_row)
-        appearance = QHBoxLayout()
+        appearance = ResponsiveRow(root)
         self.caption_mode = QComboBox()
         self.caption_mode.addItem('Tek altyazı','single')
         self.caption_mode.addItem('Diyalog · son konuşmacı','dialogue')
@@ -288,7 +289,7 @@ class Window(QMainWindow):
         appearance.addWidget(self.appearance_button)
         appearance.addStretch()
         layout.addLayout(appearance)
-        hud_row = QHBoxLayout()
+        hud_row = ResponsiveRow(root)
         self.hud_enabled = QCheckBox('Görev / HUD çevirisi')
         self.hud_select = QPushButton('HUD bölgesi seç')
         self.hud_select.clicked.connect(lambda: self.choose('hud'))
@@ -303,17 +304,32 @@ class Window(QMainWindow):
         hud_row.addWidget(self.hud_appearance)
         hud_row.addWidget(self.hud_text)
         layout.addLayout(hud_row)
-        tv_row = QHBoxLayout()
+        tv_page = QWidget()
+        tv_layout = QVBoxLayout(tv_page)
+        tv_title = QLabel('TV’ye bağlan')
+        tv_title.setObjectName('heading')
+        tv_layout.addWidget(tv_title)
+        tv_hint = QLabel('Bilgisayar ve TV aynı yerel ağda olmalı. TV tarayıcısını açarak bağlanabilirsiniz.')
+        tv_hint.setWordWrap(True)
+        tv_layout.addWidget(tv_hint)
+        self.tv_state = QLabel('Yayın kapalı')
+        self.tv_state.setObjectName('connectionState')
+        self.tv_state.setTextFormat(Qt.PlainText)
+        tv_layout.addWidget(self.tv_state)
+        tv_layout.addWidget(QLabel('1 · Yerel altyazı yayınını açın'))
+        tv_row = ResponsiveRow(tv_page)
         self.tv_button = QPushButton('TV yayınını aç')
         self.tv_button.clicked.connect(self.toggle_tv)
         self.tv_info = QLabel('TV ve bilgisayar aynı ağda olmalı.')
         self.tv_info.setWordWrap(True)
+        self.tv_info.setTextFormat(Qt.PlainText)
         tv_row.addWidget(self.tv_button)
         tv_row.addWidget(self.tv_info)
-        layout.addLayout(tv_row)
-        tv_tools = QHBoxLayout()
+        tv_layout.addLayout(tv_row)
+        tv_tools = ResponsiveRow(tv_page)
         self.tv_urls = QComboBox()
-        self.tv_urls.setMinimumContentsLength(25)
+        self.tv_urls.setMinimumContentsLength(12)
+        self.tv_urls.setAccessibleName('TV alıcı adresi')
         self.tv_urls.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self.tv_copy_url = QPushButton('Adresi kopyala')
         self.tv_copy_code = QPushButton('Kodu kopyala')
@@ -322,10 +338,34 @@ class Window(QMainWindow):
         self.tv_copy_url.clicked.connect(self.copy_tv_address)
         self.tv_copy_code.clicked.connect(self.copy_tv_code)
         self.tv_test.clicked.connect(self.test_tv_caption)
-        for item in (self.tv_urls,self.tv_copy_url,self.tv_copy_code,self.tv_test,self.tv_clients):
+        self.tv_urls.setMinimumWidth(0)
+        tv_layout.addWidget(QLabel('2 · TV tarayıcısında bu adresi açın'))
+        tv_layout.addWidget(self.tv_urls)
+        self.tv_code = QLabel('—')
+        self.tv_code.setTextFormat(Qt.PlainText)
+        self.tv_code.setObjectName('connectionCode')
+        self.tv_code.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
+        self.tv_code.setAccessibleName('Eşleştirme kodu')
+        tv_layout.addWidget(QLabel('3 · Alıcı isterse eşleştirme kodunu girin'))
+        tv_layout.addWidget(self.tv_code)
+        for item in (self.tv_copy_url,self.tv_copy_code,self.tv_test):
             tv_tools.addWidget(item)
-        layout.addLayout(tv_tools)
-        samsung_row = QHBoxLayout()
+        tv_layout.addLayout(tv_tools)
+        tv_layout.addWidget(self.tv_clients)
+        self.tv_feedback = QLabel('Yalnız altyazı metni gönderilir. Oyun veya video görüntüsü TV’ye aktarılmaz.')
+        self.tv_feedback.setWordWrap(True)
+        self.tv_feedback.setTextFormat(Qt.PlainText)
+        tv_layout.addWidget(self.tv_feedback)
+        tv_layout.addStretch()
+        samsung_page = QWidget()
+        samsung_layout = QVBoxLayout(samsung_page)
+        samsung_title = QLabel('Samsung TV kurulumu · isteğe bağlı')
+        samsung_title.setObjectName('context')
+        samsung_layout.addWidget(samsung_title)
+        samsung_hint = QLabel('TV tarayıcısı ile bağlantı için kurulum gerekmez. Bu bölüm mevcut Samsung yardımcı aracını kullanır; fiziksel TV kurulumu henüz doğrulanmadı.')
+        samsung_hint.setWordWrap(True)
+        samsung_layout.addWidget(samsung_hint)
+        samsung_row = ResponsiveRow(samsung_page)
         self.tv_host = QLineEdit()
         self.tv_host.setPlaceholderText('Samsung TV IP adresi')
         self.tv_host.setText(self.settings.values.get('samsung_host',''))
@@ -340,8 +380,8 @@ class Window(QMainWindow):
         self.samsung_cancel.clicked.connect(self.samsung.cancel)
         for widget in (self.tv_host, self.samsung_scan, self.samsung_install, self.samsung_cancel, self.samsung_login):
             samsung_row.addWidget(widget)
-        layout.addLayout(samsung_row)
-        samsung_options=QHBoxLayout()
+        samsung_layout.addLayout(samsung_row)
+        samsung_options=ResponsiveRow(samsung_page)
         self.samsung_devices=QComboBox()
         self.samsung_devices.addItem('Bulunan TV’yi seç','')
         self.samsung_devices.activated.connect(lambda index:self.tv_host.setText(self.samsung_devices.itemData(index)) if index>0 else None)
@@ -349,16 +389,16 @@ class Window(QMainWindow):
         self.samsung_log=QPushButton('Samsung günlüğü')
         self.samsung_log.clicked.connect(self.open_samsung_log)
         for widget in (self.samsung_devices,self.samsung_renew,self.samsung_log):samsung_options.addWidget(widget)
-        layout.addLayout(samsung_options)
+        samsung_layout.addLayout(samsung_options)
         self.samsung_progress=QProgressBar()
         self.samsung_progress.setRange(0,100)
         self.samsung_progress.hide()
-        layout.addWidget(self.samsung_progress)
+        samsung_layout.addWidget(self.samsung_progress)
         self.samsung_detail=QLabel('')
         self.samsung_detail.setTextFormat(Qt.PlainText)
         self.samsung_detail.setWordWrap(True)
-        layout.addWidget(self.samsung_detail)
-        diagnostic_tools=QHBoxLayout()
+        samsung_layout.addWidget(self.samsung_detail)
+        diagnostic_tools=ResponsiveRow(root)
         self.screenshot_button=QPushButton('OCR görüntüsünü kaydet')
         self.screenshot_button.clicked.connect(self.export_image)
         self.diagnostics_button=QPushButton('Tanılamayı kaydet')
@@ -370,6 +410,13 @@ class Window(QMainWindow):
         self.export_text=QCheckBox('Tanılama kaydına okunan metni de ekle')
         self.export_text.setToolTip('JSON dosyasına İngilizce OCR metni ve Türkçe çeviriyi ekler; görüntü eklemez.')
         layout.addWidget(self.export_text)
+        self.ui_sounds = QCheckBox('Menü sesleri')
+        self.ui_sounds.setChecked(self.settings.values.get('ui_sounds',False))
+        self.ui_sounds.setToolTip('Ekran değiştirirken kısa ve düşük sesli bir bildirim çalar.')
+        self.reduced_motion = QCheckBox('Ekran geçişlerinde hareketi azalt')
+        self.reduced_motion.setChecked(self.settings.values.get('reduced_motion',system_reduced_motion()))
+        layout.addWidget(self.ui_sounds)
+        layout.addWidget(self.reduced_motion)
         self.status = QLabel('Önce ekrandaki İngilizce altyazı bölgesini seçin.')
         self.status.setTextFormat(Qt.PlainText)
         if self.settings.warnings:
@@ -382,8 +429,20 @@ class Window(QMainWindow):
         self.target.setReadOnly(True)
         root.setObjectName('workspace')
         layout.addStretch()
-        self.console=ConsoleUI(self,root,self.source,self.target,self.status,
+        samsung_layout.addStretch()
+        self.settings_tabs = QTabWidget()
+        self.settings_tabs.setAccessibleName('Ayar bölümleri')
+        for page, title in ((root,'Çeviri'),(tv_page,'TV bağlantısı'),(samsung_page,'Samsung')):
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            scroll.setWidget(page)
+            self.settings_tabs.addTab(scroll,title)
+        self.console=ConsoleUI(self,self.settings_tabs,self.source,self.target,self.status,
                                (self.select,self.preview_button,self.start,self.pause_button,self.stop),APP_VERSION,self.import_profile)
+        self.console.sound.set_enabled(self.ui_sounds.isChecked())
+        self.console.pages.reduced_motion = self.reduced_motion.isChecked()
+        self.ui_sounds.toggled.connect(self.presentation_changed)
+        self.reduced_motion.toggled.connect(self.presentation_changed)
         self.console.set_games(self._game_choices)
         self.console.source_requested.connect(self.open_source)
         self.console.game_requested.connect(self.open_game)
@@ -423,6 +482,15 @@ class Window(QMainWindow):
         self.poll()
         if restore_issues:
             self.status.setText(' '.join(restore_issues))
+
+    def presentation_changed(self):
+        self.console.sound.set_enabled(self.ui_sounds.isChecked())
+        self.console.pages.reduced_motion = self.reduced_motion.isChecked()
+        if self.reduced_motion.isChecked():self.console.pages.finish_transition()
+        try:
+            self.settings.save(ui_sounds=self.ui_sounds.isChecked(),reduced_motion=self.reduced_motion.isChecked())
+        except (OSError,ValueError) as exc:
+            self.status.setText('Arayüz tercihi kaydedilemedi: '+str(exc))
 
     def source_change_allowed(self):
         return not (self.closing or self._cleanup_failed or self.selector is not None or self.import_busy
@@ -795,20 +863,29 @@ class Window(QMainWindow):
         update_sample()
         self.exec_capture_safe_dialog(dialog)
 
+    def prepare_capture_safe_dialog(self,dialog):
+        if self.closing or self._cleanup_failed:return False
+        if self.startup is not None and not self.startup.gate.is_set() and not self.control.snapshot()[0]:
+            self.status.setText('Modeller hazırlanıyor; hazır olunca ayarları açabilirsiniz.')
+            return False
+        self.cancel_selection()
+        excluded=try_capture_exclusion(dialog)
+        if self.capture_active() and not excluded:
+            self.status.setText('Bu pencereyi açmak için önce çeviriyi durdurun; yakalamadan dışlanamadı.')
+            return False
+        return True
+
     def exec_capture_safe_dialog(self,dialog):
         """Run a one-shot dialog; dispose it after the caller reads its fields."""
+        previous=QApplication.focusWidget()
         try:
-            if self.closing or self._cleanup_failed:return QDialog.Rejected
-            if self.startup is not None and not self.startup.gate.is_set() and not self.control.snapshot()[0]:
-                self.status.setText('Modeller hazırlanıyor; hazır olunca ayarları açabilirsiniz.')
-                return QDialog.Rejected
-            self.cancel_selection()
-            excluded=try_capture_exclusion(dialog)
-            if self.capture_active() and not excluded:
-                self.status.setText('Bu pencereyi açmak için önce çeviriyi durdurun; yakalamadan dışlanamadı.')
-                return QDialog.Rejected
+            if not self.prepare_capture_safe_dialog(dialog):return QDialog.Rejected
+            self.console.pages.finish_transition()
             return dialog.exec()
-        finally:dialog.deleteLater()
+        finally:
+            dialog.deleteLater()
+            if previous is not None and previous.isVisible() and previous.isEnabled() and not self.closing:
+                previous.setFocus(Qt.OtherFocusReason)
 
     def refresh_overlay(self):
         if not self.region or not self.capture_active():
@@ -958,7 +1035,7 @@ class Window(QMainWindow):
         try:
             service.start()
         except Exception as exc:
-            self.status.setText(f'TV yayını açılamadı: {exc}')
+            self.tv_message(f'TV yayını açılamadı: {exc}')
             self.stop_tv()
             return
         self.tv_button.setText('TV yayınını kapat')
@@ -1007,24 +1084,28 @@ class Window(QMainWindow):
             self.tv_urls.setCurrentIndex(self.tv_urls.findData(selected))
         self.tv_address_refresh_at=time.monotonic()+10
 
+    def tv_message(self,text):
+        self.status.setText(text)
+        self.tv_feedback.setText(text)
+
     def copy_tv_code(self):
         if not self.tv or self.tv_closing or self.tv.connection_info() is None:
-            self.status.setText('Önce TV yayınını açın.')
+            self.tv_message('Önce TV yayınını açın.')
             return
         QApplication.clipboard().setText(self.tv.token)
-        self.status.setText('Eşleştirme kodu kopyalandı.')
+        self.tv_message('Eşleştirme kodu kopyalandı.')
 
     def copy_tv_address(self):
         info=self.tv.connection_info() if self.tv and not self.tv_closing else None
         if info is None:
-            self.status.setText('Önce TV yayınını açın.')
+            self.tv_message('Önce TV yayınını açın.')
             return
         self.update_tv_addresses(info)
         if not self.tv_urls.currentData(Qt.UserRole+1):
-            self.status.setText('Seçili adres artık etkin değil; listeden TV ile aynı ağdaki adresi seçin.')
+            self.tv_message('Seçili adres artık etkin değil; listeden TV ile aynı ağdaki adresi seçin.')
             return
         QApplication.clipboard().setText(self.tv_urls.currentData())
-        self.status.setText('TV alıcı adresi kopyalandı. TV ve bilgisayar aynı ağda olmalı.')
+        self.tv_message('TV alıcı adresi kopyalandı. TV ve bilgisayar aynı ağda olmalı.')
 
     def test_tv_caption(self):
         try:
@@ -1032,9 +1113,9 @@ class Window(QMainWindow):
                 raise ValueError('Önce TV yayınını açın.')
             self.tv.test_caption()
         except ValueError as exc:
-            self.status.setText(str(exc))
+            self.tv_message(str(exc))
         else:
-            self.status.setText('Test altyazısı bağlı cihazlara yayınlandı.')
+            self.tv_message('Test altyazısı bağlı cihazlara yayınlandı.')
 
     def stop_tv(self):
         if self.tv and not self.tv_closing:
@@ -1638,6 +1719,12 @@ class Window(QMainWindow):
         self.tv_button.setEnabled(not tv_closing)
         info=self.tv.connection_info() if self.tv and not tv_closing else None
         ready=info is not None
+        self.tv_state.setText('Kapatma tamamlanamadı' if self.tv_stop_error else
+                              'Yayın kapanıyor…' if tv_closing else
+                              'Alıcı bağlı' if ready and info.clients else
+                              'TV bağlantısı bekleniyor' if ready else
+                              'Yayın hazırlanıyor' if self.tv else 'Yayın kapalı')
+        self.tv_code.setText(self.tv.token if ready else '—')
         self.tv_urls.setEnabled(ready)
         self.tv_copy_url.setEnabled(ready)
         self.tv_copy_code.setEnabled(ready)
@@ -1679,6 +1766,8 @@ class Window(QMainWindow):
             phase,prompt='Alan bekleniyor','Alanı seç.\nSonra başlat.'
         self.console.set_state(ConsoleState(context,phase,prompt,self.source_change_allowed(),
                                             not selecting and not stopping and not self.closing and not self._cleanup_failed,preparing,bool(active)))
+        if self.console.preferences.isVisible():
+            self.console.preference_status.setText(self.status.text())
         if completed_navigation is not None:self.console.navigate(completed_navigation)
         if self.closing and not active and not self.import_busy and not import_active and self.tv is None and not tv_closing and not self.samsung.busy:
             if self.close():

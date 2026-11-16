@@ -5,13 +5,13 @@ from dataclasses import dataclass
 from pathlib import Path
 import html
 
-from PySide6.QtCore import Qt, Signal, QEvent,QRectF,QPointF,QSize
+from PySide6.QtCore import Qt, Signal, QEvent,QRectF,QPointF,QSize,QPropertyAnimation,QEasingCurve
 from PySide6.QtGui import QPainter,QColor,QPixmap,QLinearGradient,QPen,QFont,QPainterPath,QFontMetricsF,QImageReader
 from PySide6.QtWidgets import (QWidget, QLabel, QPushButton, QVBoxLayout,
     QHBoxLayout, QGridLayout, QStackedWidget, QScrollArea, QDialog,
     QLineEdit, QListWidget, QListWidgetItem, QAbstractItemView,QProgressBar,QBoxLayout,QLayout,QSizePolicy,
-    QStyledItemDelegate,QStyle,QListView)
-from capture_exclusion import try_capture_exclusion
+    QStyledItemDelegate,QStyle,QListView,QGraphicsOpacityEffect)
+from presentation import NavigationSound,ResponsiveRow
 
 
 _BUNDLED_GAMES={
@@ -91,6 +91,12 @@ QListWidget::item:selected {background:#193b7b;color:#e5efff;}
 QScrollArea {background:transparent;border:0;}
 QScrollBar:vertical {background:#101b30;width:12px;}
 QScrollBar::handle:vertical {background:#304665;min-height:24px;border-radius:5px;}
+QTabWidget::pane {border:1px solid #243451;border-radius:9px;}
+QTabBar::tab {background:#101b30;color:#91a7ca;padding:12px 18px;}
+QTabBar::tab:selected {background:#192b48;color:#e5efff;border-bottom:2px solid #80aaff;}
+QTabBar::tab:focus {border:2px solid #80aaff;}
+QLabel#connectionCode {font-family:Consolas;font-size:32px;font-weight:600;color:#a6c8ff;padding:12px;}
+QLabel#connectionState {font-size:20px;font-weight:600;padding:12px;background:#192b48;border-radius:9px;}
 '''
 
 
@@ -231,6 +237,30 @@ class PageStack(QStackedWidget):
         super().__init__()
         self.layout().setSizeConstraint(QLayout.SetNoConstraint)
         self.currentChanged.connect(lambda _:self.updateGeometry())
+        self.reduced_motion = True
+        self._effect = QGraphicsOpacityEffect(self)
+        self._effect.setOpacity(1)
+        self.setGraphicsEffect(self._effect)
+        self._transition = QPropertyAnimation(self._effect, b'opacity', self)
+        self._transition.setDuration(160)
+        self._transition.setEasingCurve(QEasingCurve.OutCubic)
+        self._transition.finished.connect(lambda:self._effect.setEnabled(False))
+        self._effect.setEnabled(False)
+
+    def finish_transition(self):
+        self._transition.stop()
+        self._effect.setOpacity(1)
+        self._effect.setEnabled(False)
+
+    def setCurrentWidget(self, widget):
+        changed = widget is not self.currentWidget()
+        self.finish_transition()
+        super().setCurrentWidget(widget)
+        if changed and not self.reduced_motion and self.isVisible():
+            self._effect.setEnabled(True)
+            self._transition.setStartValue(.35)
+            self._transition.setEndValue(1.)
+            self._transition.start()
 
     def minimumSizeHint(self):
         page=self.currentWidget()
@@ -336,30 +366,39 @@ class ConsoleUI(QWidget):
         self.home_choices = ()
         self.profile_choices = ()
         self.target = target
+        self._owner = owner
+        self.sound = NavigationSound(self)
         self.pages = PageStack()
         self.preferences = QDialog(owner)
         self.preferences.setObjectName('preferences')
-        self.preferences.setWindowTitle('Çeviri ayarları')
+        self.preferences.setWindowTitle('MOZKAN Live Sub · Ayarlar')
+        self.preferences.setWindowModality(Qt.WindowModal)
         self.preferences.setAttribute(Qt.WA_QuitOnClose, False)
-        self.preferences.resize(960, 720)
+        available = owner.screen().availableGeometry()
+        self.preferences.resize(min(960, available.width()-40), min(760, available.height()-60))
         preferences_layout = QVBoxLayout(self.preferences)
-        self.configuration_scroll = QScrollArea()
-        self.configuration_scroll.setWidgetResizable(True)
-        self.configuration_scroll.setWidget(configuration)
-        preferences_layout.addWidget(self.configuration_scroll)
-        close = QPushButton('Tamam')
-        close.clicked.connect(self.preferences.hide)
+        preferences_layout.addWidget(configuration)
+        self.preference_status = label('', 'eyebrow')
+        self.preference_status.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        preferences_layout.addWidget(self.preference_status)
+        close = QPushButton('Kapat')
+        close.setAutoDefault(False)
+        close.clicked.connect(self.preferences.reject)
         preferences_layout.addWidget(close)
+        self.preferences.finished.connect(self.restore_settings_focus)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 22, 28, 18)
         layout.setSpacing(18)
-        header = QHBoxLayout()
-        header.addWidget(label('ALTYAZI ATÖLYESİ', 'brand'))
+        header = ResponsiveRow(self)
+        header.addWidget(label('MOZKAN LIVE SUB', 'brand'))
         header.addStretch()
-        self.settings_button = QPushButton('Ayarlar ve TV')
+        self.settings_button = QPushButton('Ayarlar')
         self.settings_button.clicked.connect(self.show_preferences)
         header.addWidget(self.settings_button)
+        self.tv_button = QPushButton('TV’ye bağlan')
+        self.tv_button.clicked.connect(lambda:self.show_preferences('tv'))
+        header.addWidget(self.tv_button)
         layout.addLayout(header)
         layout.addWidget(self.pages, 1)
 
@@ -488,7 +527,7 @@ class ConsoleUI(QWidget):
         self.pages.addWidget(self.work)
         status.setObjectName('eyebrow')
         layout.addWidget(status)
-        footer = QHBoxLayout()
+        footer = ResponsiveRow(self)
         self.about_button=QPushButton('Yerel uygulama · '+version+' · Hakkında')
         self.about_button.setObjectName('quiet')
         self.about_button.clicked.connect(lambda:self.about_requested.emit())
@@ -498,11 +537,19 @@ class ConsoleUI(QWidget):
         self.home_button.setObjectName('quiet')
         self.home_button.clicked.connect(lambda: self.navigation_requested.emit('home'))
         footer.addWidget(self.home_button)
+        self.back_button = QPushButton('Geri · Esc')
+        self.back_button.setObjectName('quiet')
+        self.back_button.clicked.connect(lambda:self.navigation_requested.emit('back'))
+        footer.addWidget(self.back_button)
+        self.back_button.hide()
+        self.home_button.hide()
         layout.addLayout(footer)
         self.pages.setCurrentWidget(self.home)
         self.update_canvas()
         for button in self.findChildren(QPushButton):
             button.installEventFilter(self)
+        self.game_list.installEventFilter(self)
+        self.search.installEventFilter(self)
         self.live_choice.setFocus(Qt.OtherFocusReason)
 
     @property
@@ -514,7 +561,11 @@ class ConsoleUI(QWidget):
             raise ValueError('Bilinmeyen ekran.')
         if not self._can_navigate:
             return False
+        changed = self.page != page
         self.pages.setCurrentWidget(getattr(self, page))
+        self.back_button.setVisible(page != 'home')
+        self.home_button.setVisible(page != 'home')
+        if changed:self.sound.play()
         if page == 'home':
             (self.live_choice if self.live_choice.isEnabled() else self.resume).setFocus()
         elif page == 'games':
@@ -526,12 +577,20 @@ class ConsoleUI(QWidget):
             (action if action.isEnabled() else self.select).setFocus()
         return True
 
-    def show_preferences(self):
+    def restore_settings_focus(self, *_):
+        if self.isVisible() and not self._owner.closing:
+            self.settings_button.setFocus(Qt.OtherFocusReason)
+
+    def show_preferences(self, section='general'):
         if not self.settings_button.isEnabled():
             return
+        if not self._owner.prepare_capture_safe_dialog(self.preferences):
+            return
         self.preferences_opening.emit()
-        self.preferences.show()
-        try_capture_exclusion(self.preferences)
+        self.pages.finish_transition()
+        self._owner.settings_tabs.setCurrentIndex(1 if section == 'tv' else 0)
+        self.preferences.open()
+        self._owner.settings_tabs.tabBar().setFocus(Qt.OtherFocusReason)
         self.preferences.raise_()
         self.preferences.activateWindow()
 
@@ -584,7 +643,11 @@ class ConsoleUI(QWidget):
         self.phase.setText(state.phase)
         self.prompt.setText(state.prompt)
         self.preparation.setVisible(state.preparing)
-        self.primary_action.setCurrentWidget(self.stop if state.running else self.start)
+        previous_action=self.primary_action.currentWidget()
+        transfer_focus=previous_action.hasFocus()
+        action=self.stop if state.running else self.start
+        self.primary_action.setCurrentWidget(action)
+        if transfer_focus and action.isEnabled():action.setFocus(Qt.OtherFocusReason)
         self.about_button.setEnabled(state.can_navigate and not state.preparing)
         self.live_choice.setEnabled(state.can_change_source)
         self.movie_choice.setEnabled(state.can_change_source)
@@ -594,6 +657,8 @@ class ConsoleUI(QWidget):
         self.home_button.setEnabled(state.can_navigate)
         self.resume.setEnabled(state.can_navigate)
         self.settings_button.setEnabled(state.can_navigate and not state.preparing)
+        self.tv_button.setEnabled(state.can_navigate and not state.preparing)
+        self.back_button.setEnabled(state.can_navigate)
         self.subtitle_settings.setEnabled(state.can_navigate and not state.preparing)
         self.update_game_action()
 
@@ -601,6 +666,13 @@ class ConsoleUI(QWidget):
         self.canvas.setCurrentWidget(self.prompt if self.target.document().isEmpty() else self.target)
 
     def eventFilter(self, watched, event):
+        if event.type()==QEvent.KeyPress and watched in (self.search,self.game_list):
+            if event.key()==Qt.Key_Down and watched is self.search and self.game_list.currentItem() is not None:
+                self.game_list.setFocus(Qt.TabFocusReason)
+                return True
+            if event.key()==Qt.Key_Escape and watched is self.search and self.search.text():
+                self.search.clear()
+                return True
         if event.type()==QEvent.FocusIn and watched in self.home_choices+self.profile_choices:
             scroll=self.parentWidget()
             while scroll is not None and not isinstance(scroll,QScrollArea):scroll=scroll.parentWidget()
@@ -615,6 +687,7 @@ class ConsoleUI(QWidget):
                 if watched in choices:
                     delta = -1 if event.key() in (Qt.Key_Left, Qt.Key_Up) else 1
                     choices[(choices.index(watched)+delta) % len(choices)].setFocus()
+                    if not event.isAutoRepeat():self.sound.play()
                 return True
         return super().eventFilter(watched, event)
 
