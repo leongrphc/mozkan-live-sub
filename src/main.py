@@ -884,8 +884,11 @@ class Window(QMainWindow):
             return dialog.exec()
         finally:
             dialog.deleteLater()
-            if previous is not None and previous.isVisible() and previous.isEnabled() and not self.closing:
-                previous.setFocus(Qt.OtherFocusReason)
+            if previous is not None and not self.closing:
+                try:
+                    if previous.isVisible() and previous.isEnabled():previous.setFocus(Qt.OtherFocusReason)
+                except RuntimeError:
+                    pass  # The owning window may have closed during the modal event loop.
 
     def refresh_overlay(self):
         if not self.region or not self.capture_active():
@@ -1669,6 +1672,8 @@ class Window(QMainWindow):
             self.tv.publish_hud('')
 
     def poll(self):
+        previous_primary=self.console.primary_action.currentWidget()
+        primary_had_focus=previous_primary.hasFocus()
         completed_navigation=None
         if time.monotonic()>=self._topology_check_at:
             self._topology_check_at=time.monotonic()+1
@@ -1766,6 +1771,9 @@ class Window(QMainWindow):
             phase,prompt='Alan bekleniyor','Alanı seç.\nSonra başlat.'
         self.console.set_state(ConsoleState(context,phase,prompt,self.source_change_allowed(),
                                             not selecting and not stopping and not self.closing and not self._cleanup_failed,preparing,bool(active)))
+        primary=self.console.primary_action.currentWidget()
+        if primary_had_focus and primary is not previous_primary and primary.isEnabled():
+            primary.setFocus(Qt.OtherFocusReason)
         if self.console.preferences.isVisible():
             self.console.preference_status.setText(self.status.text())
         if completed_navigation is not None:self.console.navigate(completed_navigation)
