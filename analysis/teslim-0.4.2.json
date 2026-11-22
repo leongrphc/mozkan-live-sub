@@ -1,0 +1,61 @@
+{
+  "version": "0.4.2",
+  "product": "MOZKAN Live Sub",
+  "generated_utc": "2026-11-22T14:18:12.940741+00:00",
+  "implementation_and_packaging_complete": true,
+  "user_acceptance": "PENDING",
+  "full_reference_equivalence_proven": false,
+  "source_commit": "d2a07af",
+  "source_version": "0.4.2",
+  "archive": {
+    "path": "D:\\Duplay-Rebuild\\releases\\MOZKANLiveSub-0.4.2-portable.zip",
+    "files": 11026,
+    "archive_bytes": 1367126826,
+    "source_bytes": 2356117803,
+    "sha256": "4957f446952fb1e45ff4f2a5fa7644340c8a6c05626d4e8ecb8851099ff0d2da",
+    "all_manifest_entries_verified": true,
+    "extracted": false
+  },
+  "source_update": {
+    "path": "D:\\Duplay-Rebuild\\releases\\MOZKANLiveSub-0.4.2-update.zip",
+    "files": 73,
+    "archive_bytes": 1116135,
+    "sha256": "0a473b7d5f44d96ef5a4cb234e66d322da4d7cc3db5804bda7d8973559cf36c1",
+    "all_manifest_entries_verified": true,
+    "from_versions": [
+      "0.4.1"
+    ],
+    "installed_on_user_install": false,
+    "installer_runtime_tested": "scratch install built from v0.4.1 sources with placeholder runtime/model; applied, hashes verified, second run refused"
+  },
+  "update_payload_equals_full_package": true,
+  "update_payload_equals_source_tree": true,
+  "validation": {
+    "unittest": "221 passed, QT_QPA_PLATFORM=offscreen",
+    "receiver_js": [
+      "tests/test_receiver.js",
+      "tests/test_receiver_link.js"
+    ],
+    "native_hotkey_check": "RegisterHotKey + WM_HOTKEY dispatch once on windows platform with hidden widget and Ctrl+Shift+Alt+F24",
+    "powershell_syntax_parsed": true,
+    "application_started": false,
+    "exe_self_test_run": false,
+    "live_ocr_translation_tested": false,
+    "tv_or_samsung_device_tested": false,
+    "term_hints_measured_on_model": false,
+    "performance_options_measured": false
+  },
+  "superseded_candidates_removed": [
+    "first 0.4.2 portable/update ZIPs built in the same session before the installer fix; never delivered"
+  ],
+  "known_issue_older_release": "0.4.1 update ZIP installer has the tr-TR path-check and File.Replace null bugs fixed in 0.4.2; use full packages for 0.4.0->0.4.1",
+  "running_user_process_restarted": false,
+  "old_installation_modified": false,
+  "settings_modified": false,
+  "preserved": [
+    "0.4.1 and older archives",
+    "installed AltyaziAtolyesi directory and backups",
+    "LocalAppData settings/imported games/logs",
+    "analysis reports"
+  ]
+}

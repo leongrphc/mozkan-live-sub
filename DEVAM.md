@@ -1,14 +1,16 @@
 # MOZKAN Live Sub — kalıcı proje hafızası
 
-## 22 Kasım 2026 — 0.4.2 kaynak çalışması (paketlenmedi)
+## 22 Kasım 2026 — 0.4.2 teslim edildi (kullanıcı kabulü bekleniyor)
 
-Kullanıcı sorunlu bölümlerin düzeltilmesini, ardından mantıklı yeni özelliklerin her aşamada commit'lenerek eklenmesini istedi. Başlangıç etiketi `v0.4.1` (8ab881e). Aşama commit'leri: TV kod sızıntısı ve 0.4.1 gerilemeleri (`ac35358`), `ui_error` günlüğü (`46a1c8c`), `tv_panel.py` ayrımı (`1d6b290`), genel kısayollar (`8258b14`), sözlük ve düzeltmeler (`6e695e9`), çeviri geçmişi (`c7c8bfb`), TV QR eşleştirme (`6978cc1`), oyun öncelikli seçenekler (`ae2a1e6`), en az gösterim süresi (`832b9d4`). Ayrıntılar ve sınırlar `UPDATE-0.4.2.md` içinde.
+Kullanıcı sorunlu bölümlerin düzeltilmesini, mantıklı yeni özelliklerin aşama aşama commit'lenmesini ve ardından son paketi istedi; testleri kendisi yapacak. Başlangıç etiketi `v0.4.1` (8ab881e). Değişiklikler ve sınırlar `UPDATE-0.4.2.md`, kesin paket kaydı `analysis/teslim-0.4.2.json`.
 
-- Bu çalışmada birim testleri offscreen Qt ile çalıştırıldı (221 geçti) ve kullanıcı uygulaması açılmadı. Gerçek oyun, TV, Samsung ve terim ipuçlarının model üzerindeki etkisi doğrulanmadı.
-- `APP_VERSION` ve paketleme betikleri (`package.py`, `verify-package.py`, `install-update.ps1`) hâlâ 0.4.1'de. 0.4.2 paketi istenirse sürüm numarası ve 0.4.1→0.4.2 güncelleme kuralları birlikte güncellenmeli. Eski ZIP'lerin üzerine yazma.
+- Tam paket `releases/MOZKANLiveSub-0.4.2-portable.zip` (11.026 dosya), küçük güncelleme `releases/MOZKANLiveSub-0.4.2-update.zip` (73 dosya, yalnız 0.4.1 kurulumu için). Manifestler doğrulandı; güncelleme yükü tam paket ve kaynakla hash eşit.
+- Aynı oturumda güncelleme aracı düzeltilmeden üretilen ilk iki 0.4.2 aday ZIP'i teslim edilmeden silindi; eski sürüm ZIP'lerine dokunulmadı.
+- Güncelleme aracı scratch bir 0.4.1 kurulumunda gerçekten çalıştırıldı ve iki gizli hata bulundu: tr-TR kültüründe büyük/küçük harf duyarsız `-match` 'I' harfini reddediyordu; `[IO.File]::Replace(..., $null)` PowerShell'de boş metin oluyordu. İkisi düzeltildi. **0.4.1 güncelleme ZIP'indeki araç da bu hatalara sahiptir**; 0.4.0→0.4.1 için tam paket kullanılmalı.
+- Doğrulama: 221 birim testi (offscreen Qt), TV alıcı JS testleri, gizli pencereyle tek seferlik yerel kısayol kontrolü. Uygulama/EXE açılmadı; gerçek oyun, TV, Samsung, terim ipuçlarının model etkisi ve performans seçenekleri ölçülmedi.
 - TV protokolündeki `name: 'Duplay'` bilinçli olarak korunuyor: Samsung `Duplay.wgt` bu adı ve 8 haneli hex kodu kontrol ediyor.
-- Yeni kullanıcı verisi `sozluk.json`, ayarlarla aynı klasörde.
-
+- Yeni kullanıcı verisi `sozluk.json`, ayarlarla aynı klasörde. Yeni ayar anahtarları: `hotkeys_enabled`, `hotkey_*`, `prefer_cpu`, `low_priority`, `min_display`.
+- Yeni hata veya kullanıcı geri bildirimi olmadan tekrar paket üretme.
 
 ## 16 Kasım 2026 — kullanıcı geliştirmeyi açıkça yeniden başlattı
 
