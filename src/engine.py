@@ -77,6 +77,10 @@ class Engine:
         self._translation_prepared=False
         self.cache: OrderedDict[str, CachedTranslation] = OrderedDict()
         self.last_translation=None
+        # Optional glossary.UserDictionary; workers only read immutable snapshots.
+        self.dictionary=None
+        self._dictionary_version=None
+        self._terms=None
 
     def prepare_translation(self,*,can_infer=lambda:True):
         if self._translation_prepared:
@@ -131,6 +135,17 @@ class Engine:
         started=time.perf_counter()
         self.last_translation=None
         self.last_match = None
+        dictionary=getattr(self,'dictionary',None)
+        snapshot=dictionary.snapshot() if dictionary is not None else None
+        self._terms=snapshot
+        if snapshot is not None:
+            if snapshot.version!=getattr(self,'_dictionary_version',None):
+                self.cache.clear()
+                self._dictionary_version=snapshot.version
+            corrected=snapshot.correction(text)
+            if corrected is not None:
+                self.last_translation=TranslationInfo('user',(time.perf_counter()-started)*1000)
+                return corrected
         if self.profile:
             if time.monotonic() - self.previous_at > 12:
                 self.previous = None
@@ -169,6 +184,9 @@ class Engine:
         if self.cancelled() or not can_infer():
             raise InferenceCancelled()
         speaker,body=('',text) if self.ocr_kind=='hud' else split_speaker(text)
+        terms=getattr(self,'_terms',None)
+        if terms is not None:
+            body=terms.apply_terms(body)
         self.prepare_translation(can_infer=can_infer)
         # Split long input explicitly, rather than silently truncating it.
         chunks = []

@@ -318,3 +318,47 @@ class HotkeyWindowTests(unittest.TestCase):
                 self.assertFalse(window.overlay_suppressed)
             finally:
                 window.close()
+
+
+class DictionaryWindowTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.app = QApplication.instance() or QApplication([])
+
+    def test_correction_dialog_saves_body_and_dictionary_dialog_manages_terms(self):
+        from PySide6.QtWidgets import QDialog, QPlainTextEdit
+        with tempfile.TemporaryDirectory() as folder:
+            settings = Settings(Path(folder)/'settings.json')
+            window = Window(Path(folder)/'models', settings=settings)
+            try:
+                self.assertFalse(window.console.correct.isEnabled())
+                window.received(window.session, 'Arthur: Get to the horse.', 'Arthur: Ata git.')
+                window.poll()
+                self.assertTrue(window.console.correct.isEnabled())
+                def accept(dialog):
+                    english, turkish = dialog.findChildren(QPlainTextEdit)
+                    self.assertEqual(english.toPlainText(), 'Get to the horse.')
+                    self.assertEqual(turkish.toPlainText(), 'Ata git.')
+                    turkish.setPlainText('Ata bin.')
+                    return QDialog.Accepted
+                with patch.object(window, 'exec_capture_safe_dialog', side_effect=accept):
+                    window.edit_correction()
+                self.assertEqual(window.dictionary.corrections(), [('Get to the horse.', 'Ata bin.')])
+                self.assertEqual(window.dictionary.snapshot().correction('Arthur: get to the horse'), 'Arthur: Ata bin.')
+                def manage(dialog):
+                    ui = window.dictionary_dialog
+                    self.assertEqual(ui['corrections'].rowCount(), 1)
+                    ui['term_source'].setText('bounty'); ui['term_target'].setText('ödül'); ui['add'].click()
+                    ui['term_source'].setText(''); ui['add'].click()
+                    self.assertIn('Kaydedilemedi', ui['info'].text())
+                    self.assertEqual(ui['terms'].rowCount(), 1)
+                    ui['corrections'].selectRow(0); ui['remove_correction'].click()
+                    self.assertEqual(ui['corrections'].rowCount(), 0)
+                    return QDialog.Rejected
+                with patch.object(window, 'exec_capture_safe_dialog', side_effect=manage):
+                    window.edit_dictionary()
+                self.assertEqual(window.dictionary.terms(), [('bounty', 'ödül')])
+                self.assertEqual(window.dictionary.corrections(), [])
+                self.assertIsNone(window.dictionary_dialog)
+            finally:
+                window.close()

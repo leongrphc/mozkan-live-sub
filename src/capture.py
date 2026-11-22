@@ -46,7 +46,7 @@ def run_capture(models, region, stop, output, status, error,
                 profile_path='', fallback=True, interval=.15,
                 engine_factory=Engine, frames=None, movie=False, control=None, ocr_kind='subtitle',stacked=False,
                 quality='fast',diagnostics=None,ignore_speaker=True,prepare_model=False,
-                progress=None,launch_gate=None,failure=None):
+                progress=None,launch_gate=None,failure=None,dictionary=None):
     """Return only after the translation child finishes, including on failures."""
     translator = None
     priority = None
@@ -75,6 +75,8 @@ def run_capture(models, region, stop, output, status, error,
         engine = engine_factory(models, profile=profile, fallback=fallback, ocr_kind=ocr_kind,
                                 cancelled=lambda:stop.is_set() or control.snapshot()[0],
                                 quality=quality if ocr_kind=='subtitle' else 'fast',ignore_speaker=ignore_speaker)
+        if dictionary is not None:
+            engine.dictionary=dictionary
         stage('ocr','ready')
         if movie or prepare_model and (profile is None or fallback):
             stage('translation','loading')

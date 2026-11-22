@@ -85,7 +85,7 @@ foreach ($record in $records) {
     if ($bytes.Length -ne $record.bytes -or $hash -ne $record.sha256) { throw "Dosya doğrulanamadı: $relative" }
     $payloads += [pscustomobject]@{ Relative=$relative; Destination=$destination; Bytes=$bytes; Hash=$hash }
 }
-foreach ($required in @('src/main.py','src/console_ui.py','src/presentation.py','src/tv_panel.py','src/hotkeys.py','src/audio/navigate.wav','MOZKANLiveSub.exe')) {
+foreach ($required in @('src/main.py','src/console_ui.py','src/presentation.py','src/tv_panel.py','src/hotkeys.py','src/glossary.py','src/audio/navigate.wav','MOZKANLiveSub.exe')) {
     if (-not $seen.ContainsKey($required)) { throw "Eksik güncelleme girdisi: $required" }
 }
 $backupRoot = Join-Path $targetRoot ('backups\before-0.4.1-' + [Guid]::NewGuid().ToString('N'))

@@ -43,6 +43,7 @@ from startup import Startup,CaptureProgress,CaptureFailure,ChildStop
 from app_log import AppLog
 from presentation import ResponsiveRow,system_reduced_motion
 from tv_panel import TVPanel
+from glossary import UserDictionary
 import hotkeys
 
 APP_VERSION='0.4.1'
@@ -347,6 +348,12 @@ class Window(TVPanel, QMainWindow):
         self.hotkeys_enabled.toggled.connect(self.hotkeys_changed)
         self.overlay_suppressed = False
         self.hotkeys = None
+        self.dictionary = UserDictionary(self.settings.path.parent/'sozluk.json')
+        self.last_pair = None
+        self.dictionary_button = QPushButton('Sözlük ve düzeltmeler')
+        self.dictionary_button.setToolTip('Çevrilmeyecek adlar, sabit terim karşılıkları ve kaydettiğiniz satır düzeltmeleri.')
+        self.dictionary_button.clicked.connect(self.edit_dictionary)
+        layout.addWidget(self.dictionary_button)
         self.status = QLabel('Önce ekrandaki İngilizce altyazı bölgesini seçin.')
         self.status.setTextFormat(Qt.PlainText)
         if self.settings.warnings:
@@ -379,6 +386,7 @@ class Window(TVPanel, QMainWindow):
         self.console.preferences_opening.connect(self.cancel_selection)
         self.console.about_requested.connect(self.show_about)
         self.console.appearance_requested.connect(self.edit_appearance)
+        self.console.correction_requested.connect(self.edit_correction)
         console_scroll=QScrollArea()
         console_scroll.setWidgetResizable(True)
         console_scroll.setFrameShape(QScrollArea.NoFrame)
@@ -412,6 +420,8 @@ class Window(TVPanel, QMainWindow):
         self.poll()
         if restore_issues:
             self.status.setText(' '.join(restore_issues))
+        elif self.dictionary.warning:
+            self.status.setText(self.dictionary.warning)
 
     def hotkey_bindings(self):
         return {name:edit.keySequence().toString(QKeySequence.PortableText) for name,edit in self.hotkey_edits.items()}
@@ -608,7 +618,7 @@ class Window(TVPanel, QMainWindow):
             label=self.hud_translation_info if update.role=='hud' else self.translation_info
             title='Görev' if update.role=='hud' else 'Altyazı'
             source={'profile':'oyun profili','model':{'cuda':'NVIDIA CUDA','cpu':'CPU'}.get(info.device,'model · cihaz ?'),
-                    'unmatched':'profilde eşleşme yok'}.get(info.source,'kaynak ?')
+                    'unmatched':'profilde eşleşme yok','user':'sizin düzeltmeniz'}.get(info.source,'kaynak ?')
             detail=f' · eşleşme %{info.match_percent:g}' if info.match_percent is not None else ''
             label.setText(f'{title} çevirisi · {source}{detail} · {info.elapsed_ms:.0f} ms'+(' · önbellek' if info.cached else ''))
             label.setToolTip('<p>'+html.escape(info.profile_kind or info.source)+('<br>CUDA kullanılamadığı için CPU kullanıldı.' if info.fallback else '')+'</p>')
@@ -847,6 +857,145 @@ class Window(TVPanel, QMainWindow):
         for spin in spins.values():spin.valueChanged.connect(apply_appearance)
         update_sample()
         self.exec_capture_safe_dialog(dialog)
+
+    def edit_correction(self):
+        if self.last_pair is None:
+            self.status.setText('Düzeltilecek bir çeviri henüz yok.')
+            return
+        source,target=self.last_pair
+        speaker,body=split_speaker(source)
+        _,translated=split_speaker(target)
+        dialog=QDialog(self)
+        dialog.setWindowTitle('Çeviriyi düzelt')
+        form=QFormLayout(dialog)
+        english=QPlainTextEdit(body)
+        english.setReadOnly(True)
+        english.setMaximumHeight(90)
+        english.setAccessibleName('İngilizce satır')
+        turkish=QPlainTextEdit(translated)
+        turkish.setMaximumHeight(90)
+        turkish.setAccessibleName('Türkçe karşılık')
+        form.addRow('İngilizce',english)
+        form.addRow('Türkçe',turkish)
+        if speaker:
+            form.addRow(QLabel(f'Konuşmacı adı ({speaker}) otomatik eklenir.'))
+        note=QLabel('Kayıt yalnız bu bilgisayarda tutulur. Aynı satır tekrar okunduğunda oyun profili ve modelden önce kullanılır.')
+        note.setWordWrap(True)
+        form.addRow(note)
+        buttons=QDialogButtonBox(QDialogButtonBox.Save|QDialogButtonBox.Cancel)
+        buttons.button(QDialogButtonBox.Save).setText('Kaydet')
+        buttons.button(QDialogButtonBox.Cancel).setText('Vazgeç')
+        buttons.accepted.connect(dialog.accept);buttons.rejected.connect(dialog.reject)
+        form.addRow(buttons)
+        if self.exec_capture_safe_dialog(dialog)!=QDialog.Accepted:
+            return
+        try:
+            self.dictionary.set_correction(body,turkish.toPlainText())
+        except (OSError,ValueError) as exc:
+            self.status.setText('Düzeltme kaydedilemedi: '+str(exc))
+            return
+        self.status.setText('Düzeltme kaydedildi; bu satır bir dahaki sefere sizin çevirinizle gösterilecek.')
+
+    def edit_dictionary(self):
+        from PySide6.QtWidgets import QTableWidget,QTableWidgetItem,QAbstractItemView,QHeaderView
+        dialog=QDialog(self)
+        dialog.setWindowTitle('Sözlük ve düzeltmeler')
+        dialog.resize(640,480)
+        root=QVBoxLayout(dialog)
+        tabs=QTabWidget()
+        root.addWidget(tabs)
+        info=QLabel('')
+        info.setWordWrap(True)
+        info.setTextFormat(Qt.PlainText)
+        root.addWidget(info)
+        def table(headers):
+            view=QTableWidget(0,2)
+            view.setHorizontalHeaderLabels(headers)
+            view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+            view.setSelectionBehavior(QAbstractItemView.SelectRows)
+            view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            view.verticalHeader().hide()
+            return view
+        def fill(view,rows,empty=''):
+            view.setRowCount(0)
+            for source,target in rows:
+                row=view.rowCount()
+                view.insertRow(row)
+                view.setItem(row,0,QTableWidgetItem(source))
+                view.setItem(row,1,QTableWidgetItem(target or empty))
+        def run(action,done):
+            try:
+                action()
+            except (OSError,ValueError) as exc:
+                info.setText('Kaydedilemedi: '+str(exc))
+                return False
+            info.setText(done)
+            refresh()
+            return True
+        term_page=QWidget()
+        term_layout=QVBoxLayout(term_page)
+        hint=QLabel('Adlar ve oyun terimleri modele gönderilmeden önce karşılığıyla değiştirilir. '
+                    'Karşılığı boş bırakırsanız terim olduğu gibi kalır. Model yine de ekleri değiştirebilir; '
+                    'bu bir ipucudur, garanti değildir. Oyun profilindeki hazır replikler değişmez.')
+        hint.setWordWrap(True)
+        term_layout.addWidget(hint)
+        terms=table(['İngilizce terim','Türkçe karşılık'])
+        term_layout.addWidget(terms)
+        add_row=ResponsiveRow(term_page)
+        term_source=QLineEdit()
+        term_source.setPlaceholderText('ör. bounty')
+        term_source.setAccessibleName('İngilizce terim')
+        term_target=QLineEdit()
+        term_target.setPlaceholderText('ör. ödül · boş = aynen bırak')
+        term_target.setAccessibleName('Türkçe karşılık')
+        add=QPushButton('Ekle / güncelle')
+        remove_term=QPushButton('Seçili terimi sil')
+        for widget in (term_source,term_target,add,remove_term):
+            add_row.addWidget(widget)
+        term_layout.addLayout(add_row)
+        def add_term():
+            if run(lambda:self.dictionary.set_term(term_source.text(),term_target.text()),'Terim kaydedildi.'):
+                term_source.clear()
+                term_target.clear()
+        add.clicked.connect(add_term)
+        term_source.returnPressed.connect(add_term)
+        term_target.returnPressed.connect(add_term)
+        def delete_term():
+            if terms.currentRow()>=0:
+                source=terms.item(terms.currentRow(),0).text()
+                run(lambda:self.dictionary.remove_term(source),'Terim silindi.')
+        remove_term.clicked.connect(delete_term)
+        tabs.addTab(term_page,'Terimler')
+        correction_page=QWidget()
+        correction_layout=QVBoxLayout(correction_page)
+        correction_hint=QLabel('İş ekranındaki "Çeviriyi düzelt" ile kaydettiğiniz satırlar. Bu satırlar tam eşleşince her zaman kullanılır.')
+        correction_hint.setWordWrap(True)
+        correction_layout.addWidget(correction_hint)
+        corrections=table(['İngilizce satır','Sizin çeviriniz'])
+        correction_layout.addWidget(corrections)
+        remove_correction=QPushButton('Seçili düzeltmeyi sil')
+        def delete_correction():
+            if corrections.currentRow()>=0:
+                source=corrections.item(corrections.currentRow(),0).text()
+                run(lambda:self.dictionary.remove_correction(source),'Düzeltme silindi.')
+        remove_correction.clicked.connect(delete_correction)
+        correction_layout.addWidget(remove_correction)
+        tabs.addTab(correction_page,'Satır düzeltmeleri')
+        def refresh():
+            fill(terms,self.dictionary.terms(),'(aynen bırak)')
+            fill(corrections,self.dictionary.corrections())
+        refresh()
+        if self.dictionary.warning:
+            info.setText(self.dictionary.warning)
+        close=QDialogButtonBox(QDialogButtonBox.Close)
+        close.button(QDialogButtonBox.Close).setText('Kapat')
+        close.rejected.connect(dialog.reject)
+        root.addWidget(close)
+        self.dictionary_dialog=dict(terms=terms,corrections=corrections,term_source=term_source,
+                                    term_target=term_target,add=add,info=info,
+                                    remove_term=remove_term,remove_correction=remove_correction)
+        self.exec_capture_safe_dialog(dialog)
+        self.dictionary_dialog=None
 
     def prepare_capture_safe_dialog(self,dialog):
         if self.closing or self._cleanup_failed:return False
@@ -1376,14 +1525,14 @@ class Window(TVPanel, QMainWindow):
                     status=lambda message: None, error=lambda _:None,
                     failure=lambda failure:self.events.failure.emit(session,'hud',failure),
                     interval=.55, control=self.hud_control, ocr_kind='hud',
-                    prepare_model=True,
+                    prepare_model=True, dictionary=self.dictionary,
                     diagnostics=lambda observation,revision:self.diagnostics.post(DiagnosticUpdate(session,'hud',revision,observation))), daemon=False)
                 hud_worker.start()
             run_capture(self.models, region, stop,
                         lambda source, target: self.events.output.emit(session, source, target, self.control.snapshot()[1]),
                         status, lambda _:None, profile_path, fallback,
                         movie=movie, control=self.control,stacked=stacked,quality=quality,interval=interval,
-                        ignore_speaker=ignore_speaker,
+                        ignore_speaker=ignore_speaker,dictionary=self.dictionary,
                         prepare_model=True,progress=lambda update:self.events.progress.emit(session,update),
                         launch_gate=startup.gate if startup is not None else None,
                         failure=lambda failure:self.events.failure.emit(session,'subtitle',failure),
@@ -1408,6 +1557,8 @@ class Window(TVPanel, QMainWindow):
         if revision is not None and not self.control.current(revision):
             return
         self.source.setPlainText(source)
+        if source and target:
+            self.last_pair=(source,target)
         try:
             target = ensure_speaker(source,target)
             if target:
@@ -1541,6 +1692,7 @@ class Window(TVPanel, QMainWindow):
         self.pause_button.setEnabled(active and not self.stop_event.is_set())
         self.pause_button.setText('Devam et' if active and self.control.snapshot()[0] else 'Duraklat')
         self.reselect_button.setEnabled(not self.closing)
+        self.console.correct.setEnabled(self.last_pair is not None and not self.closing)
         tv_closing = self.tv_closing
         self.poll_tv(tv_closing)
         paused=active and self.control.snapshot()[0]

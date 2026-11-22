@@ -356,6 +356,7 @@ class ConsoleUI(QWidget):
     preferences_opening = Signal()
     about_requested = Signal()
     appearance_requested = Signal()
+    correction_requested = Signal()
 
     def __init__(self, owner, configuration, source, target, status, controls, version,game_import):
         super().__init__(owner)
@@ -512,7 +513,11 @@ class ConsoleUI(QWidget):
         dock.addWidget(self.select,1);dock.addWidget(self.primary_action,2);dock.addWidget(self.subtitle_settings,1)
         work_layout.addLayout(dock)
         secondary=QHBoxLayout()
-        secondary.addWidget(self.pause);secondary.addWidget(self.preview)
+        self.correct = QPushButton('Çeviriyi düzelt')
+        self.correct.setToolTip('Son satırın Türkçesini düzeltin; aynı satır bir dahaki sefere sizin çevirinizle gösterilir.')
+        self.correct.setEnabled(False)
+        self.correct.clicked.connect(lambda:self.correction_requested.emit())
+        secondary.addWidget(self.pause);secondary.addWidget(self.preview);secondary.addWidget(self.correct)
         work_layout.addLayout(secondary)
         self.details = QPushButton('Çeviri ayrıntısını göster')
         self.details.setCheckable(True)
