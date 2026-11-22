@@ -126,7 +126,8 @@ class SamsungLifecycleTests(unittest.TestCase):
             self.assertGreaterEqual(self.helper.job.active(),3)
             self.helper.cancel()
             self.until(lambda:not self.helper.busy)
-            self.assertEqual(k.WaitForSingleObject(handle,0),0)
+            # Job accounting can drop to zero just before the process object signals.
+            self.assertEqual(k.WaitForSingleObject(handle,2000),0)
         finally:k.CloseHandle(handle)
 
     def test_normal_root_exit_also_drains_lingering_child(self):
@@ -138,7 +139,8 @@ class SamsungLifecycleTests(unittest.TestCase):
             (self.data/'allow-exit').touch()
             self.until(lambda:not self.helper.busy)
             self.assertTrue(self.helper.state.scanned)
-            self.assertEqual(k.WaitForSingleObject(handle,0),0)
+            # Job accounting can drop to zero just before the process object signals.
+            self.assertEqual(k.WaitForSingleObject(handle,2000),0)
         finally:k.CloseHandle(handle)
 
     def test_error_incomplete_and_capacity_are_distinct_and_retry_uses_new_job(self):

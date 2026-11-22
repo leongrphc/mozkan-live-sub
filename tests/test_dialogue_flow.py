@@ -95,7 +95,7 @@ class DialogueFlowTests(unittest.TestCase):
                         window.poll()
                         self.assertTrue(window.tv_test.isEnabled())
                         window.test_tv_caption()
-                        self.assertEqual(json.loads(client.recv(timeout=3))['text'],'Altyazı Atölyesi bağlantısı hazır.')
+                        self.assertEqual(json.loads(client.recv(timeout=3))['text'],'MOZKAN Live Sub bağlantısı hazır.')
                         client.recv(timeout=3)
                     self.assertFalse(window.caption_mode.isEnabled())
                     advance.set()

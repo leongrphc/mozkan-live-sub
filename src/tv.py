@@ -17,6 +17,9 @@ from hud import BADGES
 # JSON keys and punctuation. Every Unicode/control character needs <=6 UTF-8
 # bytes under ensure_ascii=False JSON encoding. No unbounded deep-copy input.
 MAX_WIRE_BYTES=3*MAX_CAPTION*6+1024
+# Automatic discovery hands the pairing code to any LAN peer that asks, so it
+# is only answered inside a short, user-opened pairing window.
+PAIRING_SECONDS=120
 
 
 def _text(value,limit=MAX_CAPTION):
@@ -181,7 +184,7 @@ if(typeof fetch==='function')fetch('/duplay.json',{cache:'no-store'}).then(respo
  if(generation!==0)return;
  if(data&&data.name==='Duplay'&&typeof data.token==='string'&&data.token.length>0&&data.token.length<=128){
   document.querySelector('#token').value=data.token;document.querySelector('#connect').onclick();
- }
+ }else status.textContent='Eşleştirme kodunu girerek bağlanabilirsiniz.';
 }).catch(()=>{if(generation===0)status.textContent='Eşleştirme kodunu girerek bağlanabilirsiniz.'});
 </script>'''.replace('__MAX_TEXT__',str(MAX_CAPTION)).replace('__MAX_MESSAGE__',str(MAX_WIRE_BYTES)).replace('__BADGES__',json.dumps(BADGES,ensure_ascii=False))
 
@@ -204,6 +207,28 @@ class TV:
         self.start_attempted = False
         self.http_started = False
         self.ws_raw = {}
+        self.pairing_until = None
+
+    def open_pairing(self, seconds=PAIRING_SECONDS):
+        """Let LAN receivers fetch the pairing code for a limited time."""
+        if not isinstance(seconds,(int,float)) or not 0<seconds<=600:
+            raise ValueError('Eşleştirme süresi 1-600 saniye olmalı.')
+        with self.condition:
+            self.pairing_until = self.clock()+seconds
+
+    def close_pairing(self):
+        with self.condition:
+            self.pairing_until = None
+
+    def pairing_remaining(self):
+        with self.condition:
+            if self.pairing_until is None:
+                return 0
+            remaining = self.pairing_until-self.clock()
+            if remaining <= 0:
+                self.pairing_until = None
+                return 0
+            return remaining
 
     def _running(self):
         return (not self.stopped and self.http_started and self.ws is not None
@@ -269,8 +294,10 @@ class TV:
                     if not (peer.is_private or peer.is_loopback or peer.is_link_local):
                         self.send_error(403)
                         return
-                    body = json.dumps(dict(name='Duplay', port=owner.ws.socket.getsockname()[1],
-                                           token=owner.token)).encode('utf-8')
+                    info = dict(name='Duplay', port=owner.ws.socket.getsockname()[1])
+                    if owner.pairing_remaining() > 0:
+                        info['token'] = owner.token
+                    body = json.dumps(info).encode('utf-8')
                 elif path == '/':
                     body = PAGE.replace('__WS_PORT__', str(owner.ws.socket.getsockname()[1])).encode('utf-8')
                 else:
@@ -279,7 +306,9 @@ class TV:
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json' if path == '/duplay.json' else 'text/html; charset=utf-8')
                 self.send_header('Cache-Control', 'no-store')
-                self.send_header('Access-Control-Allow-Origin', '*')
+                if path == '/duplay.json':
+                    # Samsung receiver probes cross-origin; the page needs no CORS.
+                    self.send_header('Access-Control-Allow-Origin', '*')
                 self.send_header('Content-Length', str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
@@ -329,6 +358,7 @@ class TV:
                 self.threads.append(thread)
                 if target == self.http.serve_forever:
                     self.http_started = True
+            self.open_pairing()
         except Exception:
             self.close()
             raise

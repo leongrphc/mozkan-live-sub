@@ -21,7 +21,7 @@ def system_reduced_motion():
 class ResponsiveRow(QBoxLayout):
     """Stack a form row when its containing page is narrow."""
     def __init__(self, host):
-        super().__init__(QBoxLayout.TopToBottom)
+        super().__init__(QBoxLayout.Direction.TopToBottom)
         host.installEventFilter(self)
 
     def minimumSize(self):
@@ -37,7 +37,8 @@ class ResponsiveRow(QBoxLayout):
             required = sum(self.itemAt(i).minimumSize().width() for i in range(self.count()))
             required += max(0, self.count()-1) * max(0, self.spacing())
             available = watched.width()-margins.left()-margins.right()-64
-            direction = self.LeftToRight if available >= max(700, required) else self.TopToBottom
+            direction = (QBoxLayout.Direction.LeftToRight if available >= max(700, required)
+                         else QBoxLayout.Direction.TopToBottom)
             if self.direction() != direction:
                 self.setDirection(direction)
         return super().eventFilter(watched, event)

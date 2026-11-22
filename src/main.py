@@ -334,6 +334,9 @@ class Window(QMainWindow):
         self.tv_copy_url = QPushButton('Adresi kopyala')
         self.tv_copy_code = QPushButton('Kodu kopyala')
         self.tv_test = QPushButton('Test altyazısı')
+        self.tv_pairing = QPushButton('Otomatik eşleştirmeyi aç')
+        self.tv_pairing.setToolTip('Aynı ağdaki alıcılar kodu 2 dakika boyunca otomatik alabilir.')
+        self.tv_pairing.clicked.connect(self.toggle_tv_pairing)
         self.tv_clients = QLabel('Bağlı alıcı: 0')
         self.tv_copy_url.clicked.connect(self.copy_tv_address)
         self.tv_copy_code.clicked.connect(self.copy_tv_code)
@@ -348,7 +351,7 @@ class Window(QMainWindow):
         self.tv_code.setAccessibleName('Eşleştirme kodu')
         tv_layout.addWidget(QLabel('3 · Alıcı isterse eşleştirme kodunu girin'))
         tv_layout.addWidget(self.tv_code)
-        for item in (self.tv_copy_url,self.tv_copy_code,self.tv_test):
+        for item in (self.tv_copy_url,self.tv_copy_code,self.tv_pairing,self.tv_test):
             tv_tools.addWidget(item)
         tv_layout.addLayout(tv_tools)
         tv_layout.addWidget(self.tv_clients)
@@ -1110,6 +1113,18 @@ class Window(QMainWindow):
         QApplication.clipboard().setText(self.tv_urls.currentData())
         self.tv_message('TV alıcı adresi kopyalandı. TV ve bilgisayar aynı ağda olmalı.')
 
+    def toggle_tv_pairing(self):
+        if not self.tv or self.tv_closing or self.tv.connection_info() is None:
+            self.tv_message('Önce TV yayınını açın.')
+            return
+        if self.tv.pairing_remaining()>0:
+            self.tv.close_pairing()
+            self.tv_message('Otomatik eşleştirme kapatıldı; yeni alıcılar kodu elle girmeli.')
+        else:
+            self.tv.open_pairing()
+            self.tv_message('Otomatik eşleştirme 2 dakika açık. Aynı ağdaki alıcılar kodu kendiliğinden alabilir.')
+        self.poll()
+
     def test_tv_caption(self):
         try:
             if not self.tv or self.tv_closing:
@@ -1734,7 +1749,11 @@ class Window(QMainWindow):
         self.tv_copy_url.setEnabled(ready)
         self.tv_copy_code.setEnabled(ready)
         self.tv_test.setEnabled(ready and info.clients>0)
-        self.tv_clients.setText(f'Bağlı alıcı: {info.clients}' if ready else
+        pairing=self.tv.pairing_remaining() if ready else 0
+        self.tv_pairing.setEnabled(ready)
+        self.tv_pairing.setText('Otomatik eşleştirmeyi kapat' if pairing>0 else 'Otomatik eşleştirmeyi aç')
+        self.tv_clients.setText(f'Bağlı alıcı: {info.clients}'
+                               +(f' · Otomatik eşleştirme {int(pairing)//60}:{int(pairing)%60:02d}' if pairing>0 else '') if ready else
                                'Bağlantılar kapanıyor…' if tv_closing else
                                'Bağlantı durumu bilinmiyor' if self.tv else 'Bağlı alıcı: 0')
         if ready and time.monotonic()>=self.tv_address_refresh_at:

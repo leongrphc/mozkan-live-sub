@@ -53,7 +53,7 @@ class TVTests(unittest.TestCase):
                 self.assertEqual(service.connection_info().clients,1)
                 service.test_caption()
                 subtitle,task=self.snapshot(client)
-                self.assertEqual(subtitle['text'],'Altyazı Atölyesi bağlantısı hazır.')
+                self.assertEqual(subtitle['text'],'MOZKAN Live Sub bağlantısı hazır.')
                 self.assertEqual(task['box'],box.as_dict())
                 service.publish_hud('')
                 _,task=self.snapshot(client)
@@ -151,6 +151,32 @@ class TVTests(unittest.TestCase):
         finally:
             service.close()
         self.assertFalse(service.threads)
+
+    def test_discovery_hides_pairing_code_outside_pairing_window(self):
+        now = [100.0]
+        service = TV(clock=lambda: now[0])
+        service.start(host='127.0.0.1', ws_port=0, http_port=0)
+        url = f'http://127.0.0.1:{service.http.server_address[1]}/duplay.json'
+        def discover():
+            with urlopen(url, timeout=3) as response:
+                return json.load(response)
+        try:
+            self.assertEqual(discover()['token'], service.token)
+            now[0] += 121
+            self.assertNotIn('token', discover())
+            self.assertEqual(service.pairing_remaining(), 0)
+            service.open_pairing(30)
+            self.assertEqual(discover()['token'], service.token)
+            service.close_pairing()
+            closed = discover()
+            self.assertNotIn('token', closed)
+            self.assertEqual(closed['port'], service.ws.socket.getsockname()[1])
+            with urlopen(f'http://127.0.0.1:{service.http.server_address[1]}/', timeout=3) as response:
+                self.assertIsNone(response.headers.get('Access-Control-Allow-Origin'))
+            with self.assertRaises(ValueError):
+                service.open_pairing(0)
+        finally:
+            service.close()
 
     def test_reconnect_preserves_dialogue_hud_and_remaining_ttl(self):
         now = [100.0]

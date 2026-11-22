@@ -204,6 +204,6 @@ class StartupTests(unittest.TestCase):
             try:
                 QTimer.singleShot(30,close_dialog)
                 window.console.about_button.click()
-                self.assertIn('Altyazı Atölyesi hakkında',observed)
+                self.assertIn('MOZKAN Live Sub hakkında',observed)
                 self.assertTrue(any('lisans sunucusu' in text for text in observed))
             finally:window.close()
