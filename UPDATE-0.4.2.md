@@ -1,4 +1,4 @@
-# 0.4.2 — MOZKAN Live Sub (taslak, paketlenmedi)
+# 0.4.2 — MOZKAN Live Sub
 
 ## Düzeltmeler
 
@@ -24,4 +24,4 @@ Yeni veri dosyası: `%LOCALAPPDATA%\AltyaziAtolyesi\sozluk.json`. Okunamazsa üz
 
 - Birim test paketi: 221 test geçti (offscreen Qt). Alıcı sayfasının JS testleri geçti.
 - Kısayol kaydı ve Windows ileti alımı, gizli bir pencere ve kullanılmayan bir tuşla gerçek Windows platformunda bir kez doğrulandı.
-- Uygulama açılıp gerçek oyun, video, TV veya Samsung ile denenmedi. Paket üretilmedi; paketleme betikleri hâlâ 0.4.0→0.4.1 güncellemesine göre ayarlı.
+- Uygulama açılıp gerçek oyun, video, TV veya Samsung ile denenmedi. Küçük güncelleme yalnız 0.4.1 kurulumuna uygulanır; 0.4.0 ve öncesi için tam paketi kullanın.

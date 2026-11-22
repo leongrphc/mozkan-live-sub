@@ -19,8 +19,8 @@ foreach ($relative in @('python\pythonw.exe', 'models\opus-mt-tc-big-en-tr-ct2\m
     }
 }
 $mainText = [IO.File]::ReadAllText((Join-Path $targetRoot 'src\main.py'))
-if ($mainText -notmatch "(?m)^APP_VERSION='0\.4\.0'\s*$") {
-    throw 'Bu güncelleme yalnız 0.4.0 kurulumuna uygulanabilir. Yeni sürüm için tam paketi kullanın.'
+if ($mainText -notmatch "(?m)^APP_VERSION='0\.4\.1'\s*$") {
+    throw 'Bu güncelleme yalnız 0.4.1 kurulumuna uygulanabilir. Yeni sürüm için tam paketi kullanın.'
 }
 
 function Assert-NoRunningInstallation {
@@ -50,7 +50,7 @@ Assert-NoRunningInstallation
 Assert-NoReparsePath $targetRoot
 $manifestPath = Join-Path $sourceRoot 'update-manifest.json'
 $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-if ($manifest.version -ne '0.4.1' -or @($manifest.from_versions).Count -ne 1 -or $manifest.from_versions[0] -ne '0.4.0') {
+if ($manifest.version -ne '0.4.2' -or @($manifest.from_versions).Count -ne 1 -or $manifest.from_versions[0] -ne '0.4.1') {
     throw 'Güncelleme manifesti geçersiz.'
 }
 $records = @($manifest.files)
@@ -72,7 +72,7 @@ foreach ($record in $records) {
         throw "Güncelleme kapsamı dışında dosya: $relative"
     }
     # Old delivery notes are immutable; leave them in the existing installation.
-    if ($relative -eq 'TESLIM.md' -or ($relative -like 'UPDATE-*' -and $relative -ne 'UPDATE-0.4.1.md')) { continue }
+    if ($relative -eq 'TESLIM.md' -or ($relative -like 'UPDATE-*' -and $relative -ne 'UPDATE-0.4.2.md')) { continue }
     $source = [IO.Path]::GetFullPath((Join-Path $sourceRoot $relative))
     $destination = [IO.Path]::GetFullPath((Join-Path $targetRoot $relative))
     if (-not $destination.StartsWith($targetPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'Hedef yolu kurulum dışına çıkıyor.' }
@@ -88,7 +88,7 @@ foreach ($record in $records) {
 foreach ($required in @('src/main.py','src/console_ui.py','src/presentation.py','src/tv_panel.py','src/hotkeys.py','src/glossary.py','src/history.py','src/audio/navigate.wav','MOZKANLiveSub.exe')) {
     if (-not $seen.ContainsKey($required)) { throw "Eksik güncelleme girdisi: $required" }
 }
-$backupRoot = Join-Path $targetRoot ('backups\before-0.4.1-' + [Guid]::NewGuid().ToString('N'))
+$backupRoot = Join-Path $targetRoot ('backups\before-0.4.2-' + [Guid]::NewGuid().ToString('N'))
 Assert-NoReparsePath $backupRoot
 Assert-NoRunningInstallation
 [IO.Directory]::CreateDirectory($backupRoot) | Out-Null
@@ -124,13 +124,13 @@ try {
         }
     }
     $receipt = [ordered]@{
-        version = '0.4.1'
-        from_version = '0.4.0'
+        version = '0.4.2'
+        from_version = '0.4.1'
         installed_utc = [DateTime]::UtcNow.ToString('o')
         backup = $backupRoot
         files = @($payloads | ForEach-Object { [ordered]@{ path=$_.Relative; sha256=$_.Hash } })
     }
-    $receipt | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $targetRoot 'installed-update-0.4.1.json') -Encoding UTF8
+    $receipt | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $targetRoot 'installed-update-0.4.2.json') -Encoding UTF8
 } catch {
     # Backups and a precise list remain available if permissions or disk errors interrupt installation.
     $applied | Set-Content -LiteralPath (Join-Path $backupRoot 'applied-files.txt') -Encoding UTF8

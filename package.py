@@ -7,7 +7,7 @@ import zipfile
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', type=Path, required=True)
-parser.add_argument('--update', action='store_true', help='Runtime/model içermeyen 0.4.0 → 0.4.1 güncellemesi.')
+parser.add_argument('--update', action='store_true', help='Runtime/model içermeyen 0.4.1 → 0.4.2 güncellemesi.')
 args = parser.parse_args()
 root = Path(__file__).resolve().parent
 destination = args.output.resolve()
@@ -38,7 +38,7 @@ try:
         archive.writestr('MOZKANLiveSub/package-manifest.json', json.dumps(manifest, ensure_ascii=False, indent=2))
         if args.update:
             archive.writestr('MOZKANLiveSub/update-manifest.json', json.dumps(dict(
-                version='0.4.1', from_versions=['0.4.0'], files=manifest), ensure_ascii=False, indent=2))
+                version='0.4.2', from_versions=['0.4.1'], files=manifest), ensure_ascii=False, indent=2))
 except BaseException:
     destination.unlink(missing_ok=True)
     raise

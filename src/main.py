@@ -47,7 +47,7 @@ from glossary import UserDictionary
 from history import TranslationHistory,HistoryWindow
 import hotkeys
 
-APP_VERSION='0.4.1'
+APP_VERSION='0.4.2'
 
 
 class Events(QObject):
