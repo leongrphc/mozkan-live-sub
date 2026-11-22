@@ -19,7 +19,7 @@ foreach ($relative in @('python\pythonw.exe', 'models\opus-mt-tc-big-en-tr-ct2\m
     }
 }
 $mainText = [IO.File]::ReadAllText((Join-Path $targetRoot 'src\main.py'))
-if ($mainText -notmatch "(?m)^APP_VERSION='0\.4\.1'\s*$") {
+if ($mainText -cnotmatch "(?m)^APP_VERSION='0\.4\.1'\s*$") {
     throw 'Bu güncelleme yalnız 0.4.1 kurulumuna uygulanabilir. Yeni sürüm için tam paketi kullanın.'
 }
 
@@ -59,20 +59,22 @@ $seen = @{}
 $payloads = @()
 foreach ($record in $records) {
     $relative = [string]$record.path
-    if ($relative -notmatch '^[A-Za-z0-9_. /-]+$' -or $relative -match '(^|/)(\.|\.\.)(/|$)' -or
+    # Case-sensitive operators: case-insensitive matching follows the current culture,
+    # and under tr-TR 'I' folds to dotless 'ı', which is outside [a-z] (e.g. TESLIM.md).
+    if ($relative -cnotmatch '^[A-Za-z0-9_. /-]+$' -or $relative -cmatch '(^|/)(\.|\.\.)(/|$)' -or
         [IO.Path]::IsPathRooted($relative) -or $relative.Contains('\')) {
         throw "Geçersiz güncelleme yolu: $relative"
     }
     if ($seen.ContainsKey($relative)) { throw "Tekrarlanan güncelleme yolu: $relative" }
     $seen[$relative] = $true
     # Only source, the new launcher and explicitly named product documents belong here.
-    if ($relative -notmatch '^src/' -and $relative -notmatch '^UPDATE-[0-9.]+\.md$' -and
-        $relative -notin @('MOZKANLiveSub.exe','start.ps1','README.md','TESLIM.md','TESLIM-MOZKAN.md',
+    if ($relative -cnotmatch '^src/' -and $relative -cnotmatch '^UPDATE-[0-9.]+\.md$' -and
+        $relative -cnotin @('MOZKANLiveSub.exe','start.ps1','README.md','TESLIM.md','TESLIM-MOZKAN.md',
                            'GUNCELLEME.md','install-update.ps1','REBRAND.md','requirements.txt')) {
         throw "Güncelleme kapsamı dışında dosya: $relative"
     }
     # Old delivery notes are immutable; leave them in the existing installation.
-    if ($relative -eq 'TESLIM.md' -or ($relative -like 'UPDATE-*' -and $relative -ne 'UPDATE-0.4.2.md')) { continue }
+    if ($relative -ceq 'TESLIM.md' -or ($relative -clike 'UPDATE-*' -and $relative -cne 'UPDATE-0.4.2.md')) { continue }
     $source = [IO.Path]::GetFullPath((Join-Path $sourceRoot $relative))
     $destination = [IO.Path]::GetFullPath((Join-Path $targetRoot $relative))
     if (-not $destination.StartsWith($targetPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'Hedef yolu kurulum dışına çıkıyor.' }
@@ -103,13 +105,13 @@ try {
         }
     }
     # Main version changes last. A partial update does not advertise the new version.
-    foreach ($payload in ($payloads | Sort-Object @{Expression={ $_.Relative -eq 'src/main.py' }})) {
+    foreach ($payload in ($payloads | Sort-Object @{Expression={ $_.Relative -ceq 'src/main.py' }})) {
         [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($payload.Destination)) | Out-Null
         $temporary = $payload.Destination + '.' + [Guid]::NewGuid().ToString('N') + '.tmp'
         try {
             [IO.File]::WriteAllBytes($temporary, $payload.Bytes)
             if ([IO.File]::Exists($payload.Destination)) {
-                [IO.File]::Replace($temporary, $payload.Destination, $null)
+                [IO.File]::Replace($temporary, $payload.Destination, [NullString]::Value)  # $null becomes "" in PowerShell
             } else {
                 [IO.File]::Move($temporary, $payload.Destination)
             }
