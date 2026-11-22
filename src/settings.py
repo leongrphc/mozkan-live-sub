@@ -8,6 +8,7 @@ from appearance import STYLE_RULES,HUD_LAYOUT_RULES
 from regions import read_saved_areas
 from subtitle_ocr import valid_quality,valid_interval
 from samsung_protocol import valid_saved_host
+from hotkeys import ACTIONS as HOTKEY_ACTIONS,valid_hotkey
 
 
 class Settings:
@@ -84,6 +85,8 @@ class Settings:
         }
         rules.update({'overlay_' + key: rule for key, rule in STYLE_RULES.items()})
         rules.update({'hud_'+key:rule for key,rule in HUD_LAYOUT_RULES.items()})
+        rules['hotkeys_enabled']=lambda v:type(v) is bool
+        rules.update({'hotkey_'+name:valid_hotkey for name,_,_ in HOTKEY_ACTIONS})
         cleaned = dict(value)
         invalid = []
         for key, rule in rules.items():

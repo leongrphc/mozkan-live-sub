@@ -18,11 +18,11 @@ os.environ['HF_HUB_OFFLINE'] = '1'
 os.environ['TRANSFORMERS_OFFLINE'] = '1'
 
 from PySide6.QtCore import Qt, QRect, Signal, QObject, QTimer, QUrl, QLockFile,QCoreApplication,QEvent,QSignalBlocker
-from PySide6.QtGui import QColor, QPainter, QPen, QFont, QFontDatabase, QDesktopServices, QImage, QPixmap
+from PySide6.QtGui import QColor, QPainter, QPen, QFont, QFontDatabase, QDesktopServices, QImage, QPixmap, QKeySequence, QGuiApplication
 from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QLabel,
     QPushButton, QVBoxLayout, QHBoxLayout, QPlainTextEdit, QComboBox,
     QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QLineEdit, QDialog, QFormLayout,
-    QDialogButtonBox, QColorDialog,QScrollArea,QProgressBar,QTabWidget)
+    QDialogButtonBox, QColorDialog,QScrollArea,QProgressBar,QTabWidget,QKeySequenceEdit)
 from settings import Settings
 from coordinates import capture_region, normalized_region
 from capture import run_capture
@@ -43,6 +43,7 @@ from startup import Startup,CaptureProgress,CaptureFailure,ChildStop
 from app_log import AppLog
 from presentation import ResponsiveRow,system_reduced_motion
 from tv_panel import TVPanel
+import hotkeys
 
 APP_VERSION='0.4.1'
 
@@ -324,6 +325,28 @@ class Window(TVPanel, QMainWindow):
         self.reduced_motion.setChecked(self.settings.values.get('reduced_motion',system_reduced_motion()))
         layout.addWidget(self.ui_sounds)
         layout.addWidget(self.reduced_motion)
+        self.hotkeys_enabled = QCheckBox('Genel kısayol tuşları (oyun içindeyken de çalışır)')
+        self.hotkeys_enabled.setChecked(self.settings.values.get('hotkeys_enabled',True))
+        layout.addWidget(self.hotkeys_enabled)
+        hotkey_form = QFormLayout()
+        self.hotkey_edits = {}
+        for name,label,default in hotkeys.ACTIONS:
+            edit = QKeySequenceEdit(QKeySequence(self.settings.values.get('hotkey_'+name,default),QKeySequence.PortableText))
+            edit.setMaximumSequenceLength(1)
+            edit.setClearButtonEnabled(True)
+            edit.setAccessibleName(label+' kısayolu')
+            edit.editingFinished.connect(self.hotkeys_changed)
+            edit.keySequenceChanged.connect(lambda sequence:self.hotkeys_changed() if sequence.isEmpty() else None)
+            self.hotkey_edits[name] = edit
+            hotkey_form.addRow(label,edit)
+        layout.addLayout(hotkey_form)
+        self.hotkey_info = QLabel('')
+        self.hotkey_info.setTextFormat(Qt.PlainText)
+        self.hotkey_info.setWordWrap(True)
+        layout.addWidget(self.hotkey_info)
+        self.hotkeys_enabled.toggled.connect(self.hotkeys_changed)
+        self.overlay_suppressed = False
+        self.hotkeys = None
         self.status = QLabel('Önce ekrandaki İngilizce altyazı bölgesini seçin.')
         self.status.setTextFormat(Qt.PlainText)
         if self.settings.warnings:
@@ -385,9 +408,65 @@ class Window(TVPanel, QMainWindow):
         for screen in QApplication.screens():
             self.watch_screen(screen)
         self.update_mode()
+        self.apply_hotkeys()
         self.poll()
         if restore_issues:
             self.status.setText(' '.join(restore_issues))
+
+    def hotkey_bindings(self):
+        return {name:edit.keySequence().toString(QKeySequence.PortableText) for name,edit in self.hotkey_edits.items()}
+
+    def apply_hotkeys(self):
+        """(Re)register system hotkeys; only on the real Windows platform."""
+        if self.hotkeys is not None:
+            self.hotkeys.clear()
+        if self.closing or not self.hotkeys_enabled.isChecked() or QGuiApplication.platformName()!='windows':
+            self.hotkey_info.setText('Kısayol tuşları kapalı.' if not self.hotkeys_enabled.isChecked() else '')
+            return
+        if self.hotkeys is None:
+            self.hotkeys = hotkeys.GlobalHotkeys(self.hotkey_pressed)
+            QApplication.instance().installNativeEventFilter(self.hotkeys)
+        failures = self.hotkeys.register(int(self.winId()),self.hotkey_bindings())
+        self.hotkey_info.setText(' '.join(f'{hotkeys.LABELS[name]}: {reason}' for name,reason in failures.items())
+                                 or 'Kısayollar oyun veya tarayıcı öndeyken de çalışır.')
+
+    def release_hotkeys(self):
+        if self.hotkeys is not None:
+            self.hotkeys.clear()
+            QApplication.instance().removeNativeEventFilter(self.hotkeys)
+            self.hotkeys = None
+
+    def hotkeys_changed(self):
+        if self.closing:return
+        bindings=self.hotkey_bindings()
+        invalid=[hotkeys.LABELS[name] for name,text in bindings.items() if not hotkeys.valid_hotkey(text)]
+        if invalid:
+            self.hotkey_info.setText('Desteklenmeyen kısayol: '+', '.join(invalid)+'. F1–F24, harf veya rakam ile Ctrl/Alt/Shift kullanın.')
+            return
+        try:
+            self.settings.save(hotkeys_enabled=self.hotkeys_enabled.isChecked(),**{'hotkey_'+name:text for name,text in bindings.items()})
+        except (OSError,ValueError) as exc:
+            self.status.setText('Kısayol tercihi kaydedilemedi: '+str(exc))
+        self.apply_hotkeys()
+
+    def hotkey_pressed(self,action):
+        # Mirror the visible buttons' enabled state; never act behind a modal dialog.
+        if self.closing or self._cleanup_failed or QApplication.activeModalWidget() is not None:
+            return
+        if action=='toggle':
+            if self.stop.isEnabled():
+                self.halt()
+            elif self.console.page=='work' and self.start.isEnabled():
+                self.request_start()
+        elif action=='pause' and self.pause_button.isEnabled():
+            self.toggle_pause()
+        elif action=='overlay':
+            self.overlay_suppressed=not self.overlay_suppressed
+            self.status.setText('PC altyazısı gizlendi; TV yayını sürer.' if self.overlay_suppressed else 'PC altyazısı gösteriliyor.')
+            self.refresh_overlay()
+        elif action=='reselect' and self.reselect_button.isEnabled():
+            self.reselect()
+        self.poll()
 
     def presentation_changed(self):
         self.console.sound.set_enabled(self.ui_sounds.isChecked())
@@ -797,7 +876,7 @@ class Window(TVPanel, QMainWindow):
                     pass  # The owning window may have closed during the modal event loop.
 
     def refresh_overlay(self):
-        if not self.region or not self.capture_active():
+        if not self.region or not self.capture_active() or self.overlay_suppressed:
             self.overlay.hide()
             self.hud_overlay.hide()
             return
@@ -816,7 +895,7 @@ class Window(TVPanel, QMainWindow):
         self.refresh_hud()
 
     def refresh_hud(self):
-        if not self.hud_region or not self.capture_active(self.hud_control):
+        if not self.hud_region or not self.capture_active(self.hud_control) or self.overlay_suppressed:
             self.hud_overlay.hide()
             return
         self.hud_overlay.other_capture_regions=(QRect(*self.region),) if self.region else ()
@@ -1503,6 +1582,7 @@ class Window(TVPanel, QMainWindow):
     def closeEvent(self, event):
         self.record_event('close_requested')
         self.closing = True
+        self.release_hotkeys()
         self._navigation_pending=None
         self.console.preferences.hide()
         self.halt()

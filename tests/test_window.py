@@ -286,3 +286,35 @@ class WindowTests(unittest.TestCase):
             if window.tv_cleanup:window.tv_cleanup.join(3)
             self.app.processEvents()
             window.close()
+
+
+class HotkeyWindowTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.app = QApplication.instance() or QApplication([])
+
+    def test_hotkeys_persist_mirror_buttons_and_hide_only_pc_overlay(self):
+        with tempfile.TemporaryDirectory() as folder:
+            settings = Settings(Path(folder)/'settings.json')
+            window = Window(Path(folder)/'models', settings=settings)
+            try:
+                # Offscreen platform: nothing is registered with Windows.
+                self.assertIsNone(window.hotkeys)
+                window.hotkey_edits['pause'].setKeySequence('Ctrl+Shift+F9')
+                window.hotkeys_changed()
+                self.assertEqual(Settings(Path(folder)/'settings.json').values['hotkey_pause'], 'Ctrl+Shift+F9')
+                window.hotkey_edits['pause'].setKeySequence('Ctrl+Space')
+                window.hotkeys_changed()
+                self.assertIn('Desteklenmeyen', window.hotkey_info.text())
+                self.assertEqual(Settings(Path(folder)/'settings.json').values['hotkey_pause'], 'Ctrl+Shift+F9')
+                with patch.object(window, 'halt') as halt, patch.object(window, 'request_start') as start:
+                    window.hotkey_pressed('toggle')  # idle and not on work page: nothing
+                    halt.assert_not_called()
+                    start.assert_not_called()
+                window.hotkey_pressed('overlay')
+                self.assertTrue(window.overlay_suppressed)
+                self.assertFalse(window.overlay.isVisible())
+                window.hotkey_pressed('overlay')
+                self.assertFalse(window.overlay_suppressed)
+            finally:
+                window.close()
