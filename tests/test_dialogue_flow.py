@@ -76,7 +76,7 @@ class DialogueFlowTests(unittest.TestCase):
                     until(lambda:window.target.toPlainText()=='PRICE: Burada bekle.' and window.current_hud=='Mavi anahtarı bul')
                     # Opening TV after the caption was accepted must publish
                     # current logical state without waiting for another caption.
-                    with patch('main.TV',return_value=service),patch.object(service,'start'):
+                    with patch('tv_panel.TV',return_value=service),patch.object(service,'start'):
                         window.toggle_tv()
                     initial,task=snapshot(True)
                     self.assertEqual(initial['stack']['current']['speaker'],'PRICE')

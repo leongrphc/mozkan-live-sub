@@ -268,7 +268,7 @@ class WindowTests(unittest.TestCase):
         service = FailingService()
         window = Window(Path('models'))
         try:
-            with patch('main.TV', return_value=service):
+            with patch('tv_panel.TV', return_value=service):
                 window.toggle_tv()
             window.tv_cleanup.join(3)
             self.app.processEvents()
