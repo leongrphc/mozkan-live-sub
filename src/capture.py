@@ -46,7 +46,8 @@ def run_capture(models, region, stop, output, status, error,
                 profile_path='', fallback=True, interval=.15,
                 engine_factory=Engine, frames=None, movie=False, control=None, ocr_kind='subtitle',stacked=False,
                 quality='fast',diagnostics=None,ignore_speaker=True,prepare_model=False,
-                progress=None,launch_gate=None,failure=None,dictionary=None):
+                progress=None,launch_gate=None,failure=None,dictionary=None,
+                prefer_cpu=False,low_priority=False):
     """Return only after the translation child finishes, including on failures."""
     translator = None
     priority = None
@@ -63,8 +64,11 @@ def run_capture(models, region, stop, output, status, error,
         if (not valid_quality(quality) or not valid_interval(interval,minimum=0 if frames is not None else .08)
                 or type(ignore_speaker) is not bool):
             raise ValueError('OCR kalitesi veya tarama aralığı geçersiz.')
-        if ocr_kind=='hud':
+        if type(prefer_cpu) is not bool or type(low_priority) is not bool:
+            raise ValueError('Performans tercihi geçersiz.')
+        if ocr_kind=='hud' or low_priority:
             priority=lower_current_thread()
+        if ocr_kind=='hud':
             if stop.wait(1.2):return
         if profile_path:stage('profile','loading')
         profile = GameProfile(profile_path) if profile_path else None
@@ -77,6 +81,8 @@ def run_capture(models, region, stop, output, status, error,
                                 quality=quality if ocr_kind=='subtitle' else 'fast',ignore_speaker=ignore_speaker)
         if dictionary is not None:
             engine.dictionary=dictionary
+        if prefer_cpu:
+            engine.prefer_cpu=True
         stage('ocr','ready')
         if movie or prepare_model and (profile is None or fallback):
             stage('translation','loading')
@@ -101,7 +107,7 @@ def run_capture(models, region, stop, output, status, error,
             reported_backend=None
             translation_priority=None
             try:
-                if ocr_kind=='hud':translation_priority=lower_current_thread()
+                if ocr_kind=='hud' or low_priority:translation_priority=lower_current_thread()
                 while not stop.is_set():
                     try:
                         revision, phrase = jobs.get(timeout=.1)

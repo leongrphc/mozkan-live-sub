@@ -237,6 +237,16 @@ class Window(TVPanel, QMainWindow):
         self.ignore_speaker=QCheckBox('Eşleştirmede konuşmacı adlarını yok say')
         self.ignore_speaker.setChecked(self.settings.values.get('ignore_speaker',True))
         layout.addWidget(self.ignore_speaker)
+        performance=ResponsiveRow(root)
+        self.prefer_cpu=QCheckBox('Çeviriyi işlemcide çalıştır (ekran kartını oyuna bırak)')
+        self.prefer_cpu.setChecked(self.settings.values.get('prefer_cpu',False))
+        self.prefer_cpu.setToolTip('NVIDIA ekran kartı kullanılmaz; çeviri daha yavaş olabilir ama oyunun GPU payı korunur.')
+        self.low_priority=QCheckBox('Çeviriye düşük öncelik ver')
+        self.low_priority.setChecked(self.settings.values.get('low_priority',False))
+        self.low_priority.setToolTip('Altyazı okuma ve çeviri iş parçacıkları oyunun gerisinde çalışır; yoğun anlarda gecikme artabilir.')
+        performance.addWidget(self.prefer_cpu)
+        performance.addWidget(self.low_priority)
+        layout.addLayout(performance)
         ocr_options=ResponsiveRow(root)
         ocr_options.addWidget(QLabel('Altyazı OCR'))
         self.ocr_quality=QComboBox()
@@ -411,6 +421,8 @@ class Window(TVPanel, QMainWindow):
         self.ocr_interval.valueChanged.connect(self.ocr_options_changed)
         self.fallback.toggled.connect(self.worker_options_changed)
         self.ignore_speaker.toggled.connect(self.worker_options_changed)
+        self.prefer_cpu.toggled.connect(self.worker_options_changed)
+        self.low_priority.toggled.connect(self.worker_options_changed)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.poll)
         self.timer.start(100)
@@ -599,7 +611,8 @@ class Window(TVPanel, QMainWindow):
         if self.closing:return
         self.cancel_selection()
         if self.worker and self.worker.is_alive():self.halt()
-        try:self.settings.save(fallback=self.fallback.isChecked(),ignore_speaker=self.ignore_speaker.isChecked())
+        try:self.settings.save(fallback=self.fallback.isChecked(),ignore_speaker=self.ignore_speaker.isChecked(),
+                               prefer_cpu=self.prefer_cpu.isChecked(),low_priority=self.low_priority.isChecked())
         except (ValueError,OSError) as exc:self.status.setText(f'Eşleştirme tercihi kaydedilemedi: {exc}')
         self.poll()
 
@@ -1489,7 +1502,8 @@ class Window(TVPanel, QMainWindow):
         self.hud_control = CaptureControl()
         self.worker = threading.Thread(target=self.run, args=(self.session, physical_region,
                                                               self.stop_event, profile_path, fallback, physical_hud, movie,self.stacked_mode(),
-                                                              self.ocr_quality.currentData(),self.ocr_interval.value(),self.ignore_speaker.isChecked(),self.startup,self._hud_stop), daemon=False)
+                                                              self.ocr_quality.currentData(),self.ocr_interval.value(),self.ignore_speaker.isChecked(),self.startup,self._hud_stop),
+                                     kwargs=dict(prefer_cpu=self.prefer_cpu.isChecked(),low_priority=self.low_priority.isChecked()), daemon=False)
         self.worker.start()
         self.console.preferences.hide()
         self.console.navigate('work')
@@ -1540,7 +1554,7 @@ class Window(TVPanel, QMainWindow):
             self.choose()
 
     def run(self, session, region, stop, profile_path='', fallback=True, hud_region=None, movie=False,stacked=False,
-            quality='fast',interval=.15,ignore_speaker=True,startup=None,hud_stop=None):
+            quality='fast',interval=.15,ignore_speaker=True,startup=None,hud_stop=None,prefer_cpu=False,low_priority=False):
         hud_worker = None
         def status(text):
             self.events.capture_message.emit(session, self.control.snapshot()[1], text, False)
@@ -1561,6 +1575,7 @@ class Window(TVPanel, QMainWindow):
                         status, lambda _:None, profile_path, fallback,
                         movie=movie, control=self.control,stacked=stacked,quality=quality,interval=interval,
                         ignore_speaker=ignore_speaker,dictionary=self.dictionary,
+                        prefer_cpu=prefer_cpu,low_priority=low_priority,
                         prepare_model=True,progress=lambda update:self.events.progress.emit(session,update),
                         launch_gate=startup.gate if startup is not None else None,
                         failure=lambda failure:self.events.failure.emit(session,'subtitle',failure),

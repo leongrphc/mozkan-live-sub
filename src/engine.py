@@ -102,7 +102,10 @@ class Engine:
             finally:_tokenizer_loading.release()
         guard()
         backend=self.translator
-        if backend is None:backend=TranslationBackend(mt,cpu_only=self.ocr_kind=='hud',guard=guard)
+        if backend is None:
+            # HUD always, subtitles on request ("game first"): leave the GPU to the game.
+            cpu_only=self.ocr_kind=='hud' or getattr(self,'prefer_cpu',False)
+            backend=TranslationBackend(mt,cpu_only=cpu_only,guard=guard)
         # Completed acquisition belongs to the engine even if the subtitle
         # changed during loading. Keep it; only obsolete inference is canceled.
         self.translator=backend

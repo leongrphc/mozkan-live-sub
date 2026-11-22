@@ -86,6 +86,8 @@ class Settings:
         rules.update({'overlay_' + key: rule for key, rule in STYLE_RULES.items()})
         rules.update({'hud_'+key:rule for key,rule in HUD_LAYOUT_RULES.items()})
         rules['hotkeys_enabled']=lambda v:type(v) is bool
+        rules['prefer_cpu']=lambda v:type(v) is bool
+        rules['low_priority']=lambda v:type(v) is bool
         rules.update({'hotkey_'+name:valid_hotkey for name,_,_ in HOTKEY_ACTIONS})
         cleaned = dict(value)
         invalid = []

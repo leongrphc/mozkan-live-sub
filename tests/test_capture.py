@@ -240,3 +240,62 @@ class CaptureTests(unittest.TestCase):
         rendered = render_caption(Caption('John','<img src=x>'))
         self.assertIn('&lt;img', rendered)
         self.assertNotIn('<img', rendered)
+
+
+class PerformanceOptionTests(unittest.TestCase):
+    def capture(self, **options):
+        from unittest.mock import patch
+        made, lowered, outputs, errors = [], [], [], []
+        stop = threading.Event()
+        class FakeEngine:
+            def __init__(self, *args, **kwargs):
+                made.append(self)
+            def read(self, frame):
+                return Reading('Hello', 1.0, 'test', 0.0)
+            def translate(self, text, *, can_infer=None):
+                stop.set()
+                return 'Merhaba'
+        class Priority:
+            def restore(self):
+                lowered.append('restored')
+        def lower():
+            lowered.append(threading.current_thread().name)
+            return Priority()
+        frame = np.zeros((80, 200, 3), dtype=np.uint8)
+        with patch('capture.lower_current_thread', side_effect=lower):
+            run_capture(models=Path('.'), region=(0, 0, 200, 80), stop=stop,
+                        output=lambda *args: outputs.append(args), status=lambda message: None,
+                        error=errors.append, engine_factory=FakeEngine,
+                        frames=(frame for _ in range(1000)), interval=.01, **options)
+        self.assertEqual(errors, [])
+        return made[0], lowered
+
+    def test_defaults_keep_gpu_and_normal_priority(self):
+        engine, lowered = self.capture()
+        self.assertFalse(getattr(engine, 'prefer_cpu', False))
+        self.assertEqual(lowered, [])
+
+    def test_game_first_options_reach_engine_and_both_threads(self):
+        engine, lowered = self.capture(prefer_cpu=True, low_priority=True)
+        self.assertTrue(engine.prefer_cpu)
+        self.assertEqual(lowered.count('restored'), 2)
+        self.assertEqual(len(lowered), 4)
+
+    def test_engine_uses_cpu_only_backend_when_preferred(self):
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        from engine import Engine
+        engine = Engine.__new__(Engine)
+        engine.ocr_kind, engine.cancelled, engine._translation_prepared = 'subtitle', (lambda: False), False
+        engine.tokenizer, engine.translator, engine.model_path = object(), None, Path('model')
+        engine.prefer_cpu = True
+        with patch('engine.TranslationBackend', return_value=SimpleNamespace(device='cpu')) as backend:
+            engine.prepare_translation()
+        self.assertTrue(backend.call_args.kwargs['cpu_only'])
+
+    def test_invalid_option_type_is_reported(self):
+        stop = threading.Event()
+        errors = []
+        run_capture(models=Path('.'), region=(0, 0, 200, 80), stop=stop, output=lambda *args: None,
+                    status=lambda message: None, error=errors.append, frames=iter(()), prefer_cpu='yes')
+        self.assertTrue(errors)
