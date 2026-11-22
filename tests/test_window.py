@@ -396,3 +396,42 @@ class TVQrWindowTests(unittest.TestCase):
             finally:
                 window.tv = None
                 window.close()
+
+
+class MinimumDisplayTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.app = QApplication.instance() or QApplication([])
+
+    def wait(self, seconds):
+        import time
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            self.app.processEvents()
+            time.sleep(.01)
+
+    def test_blank_is_deferred_until_minimum_time_and_new_line_cancels_it(self):
+        with tempfile.TemporaryDirectory() as folder:
+            window = Window(Path(folder)/'models', settings=Settings(Path(folder)/'settings.json'))
+            try:
+                window.min_display.setValue(.3)
+                self.assertEqual(Settings(Path(folder)/'settings.json').values['min_display'], .3)
+                window.received(window.session, 'One.', 'Bir.')
+                window.received(window.session, '', '')
+                self.assertEqual(window.target.toPlainText(), 'Bir.')
+                window.received(window.session, 'Two.', 'İki.')
+                self.wait(.4)
+                self.assertEqual(window.target.toPlainText(), 'İki.')  # stale deferred clear ignored
+                window.received(window.session, '', '')  # hold already elapsed: clears now
+                self.assertEqual(window.target.toPlainText(), '')
+                window.received(window.session, 'Four.', 'Dört.')
+                window.received(window.session, '', '')
+                self.assertEqual(window.target.toPlainText(), 'Dört.')
+                self.wait(.45)
+                self.assertEqual(window.target.toPlainText(), '')
+                window.min_display.setValue(0)
+                window.received(window.session, 'Three.', 'Üç.')
+                window.received(window.session, '', '')
+                self.assertEqual(window.target.toPlainText(), '')
+            finally:
+                window.close()

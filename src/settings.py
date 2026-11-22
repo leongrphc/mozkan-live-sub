@@ -88,6 +88,7 @@ class Settings:
         rules['hotkeys_enabled']=lambda v:type(v) is bool
         rules['prefer_cpu']=lambda v:type(v) is bool
         rules['low_priority']=lambda v:type(v) is bool
+        rules['min_display']=lambda v:type(v) in (int,float) and 0<=v<=5
         rules.update({'hotkey_'+name:valid_hotkey for name,_,_ in HOTKEY_ACTIONS})
         cleaned = dict(value)
         invalid = []

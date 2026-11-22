@@ -264,7 +264,20 @@ class Window(TVPanel, QMainWindow):
         self.ocr_interval.setValue(self.settings.values.get('ocr_interval',.35))
         self.ocr_interval.setToolTip('Altyazı yakalamaları arasındaki en az süre. OCR daha uzun sürerse çevrim de uzar.')
         ocr_options.addWidget(self.ocr_interval)
+        ocr_options.addWidget(QLabel('En az gösterim'))
+        self.min_display=QDoubleSpinBox()
+        self.min_display.setDecimals(1)
+        self.min_display.setRange(0,5)
+        self.min_display.setSingleStep(.5)
+        self.min_display.setSuffix(' s')
+        self.min_display.setSpecialValueText('kapalı')
+        self.min_display.setValue(self.settings.values.get('min_display',0))
+        self.min_display.setToolTip('Hızlı kaybolan altyazının Türkçesi en az bu kadar ekranda kalır. Yeni satır gelince hemen değişir.')
+        self.min_display.setAccessibleName('En az gösterim süresi')
+        ocr_options.addWidget(self.min_display)
         ocr_options.addStretch()
+        self.caption_shown_at=None
+        self.clear_token=0
         layout.addLayout(ocr_options)
         observation_row=ResponsiveRow(root)
         self.ocr_info=QLabel('Altyazı OCR: kapalı')
@@ -419,6 +432,7 @@ class Window(TVPanel, QMainWindow):
         self.caption_mode.currentIndexChanged.connect(self.appearance_changed)
         self.ocr_quality.currentIndexChanged.connect(self.ocr_options_changed)
         self.ocr_interval.valueChanged.connect(self.ocr_options_changed)
+        self.min_display.valueChanged.connect(self.min_display_changed)
         self.fallback.toggled.connect(self.worker_options_changed)
         self.ignore_speaker.toggled.connect(self.worker_options_changed)
         self.prefer_cpu.toggled.connect(self.worker_options_changed)
@@ -765,6 +779,21 @@ class Window(TVPanel, QMainWindow):
             self.console.canvas.set_preview()
         else:
             self.hud_enabled.setChecked(False)
+
+    def min_display_changed(self):
+        if self.closing:return
+        try:self.settings.save(min_display=self.min_display.value())
+        except (ValueError,OSError) as exc:self.status.setText(f'Gösterim süresi kaydedilemedi: {exc}')
+
+    def flush_clear(self,session,token):
+        """Deferred blank caption once the minimum display time has passed."""
+        if token!=self.clear_token or session!=self.session or self.stop_event.is_set():
+            return
+        self.caption_shown_at=None
+        self.captions.clear()
+        self.target.setPlainText('')
+        self.refresh_overlay()
+        self.publish_caption()
 
     def appearance_changed(self):
         try:
@@ -1599,6 +1628,14 @@ class Window(TVPanel, QMainWindow):
             return
         if revision is not None and not self.control.current(revision):
             return
+        self.clear_token+=1
+        if not target and self.caption_shown_at is not None and self.min_display.value()>0:
+            remaining=self.caption_shown_at+self.min_display.value()-time.monotonic()
+            if remaining>0:
+                session,token=self.session,self.clear_token
+                QTimer.singleShot(max(1,round(remaining*1000)),self,lambda:self.flush_clear(session,token))
+                return
+        self.caption_shown_at=time.monotonic() if target else None
         self.source.setPlainText(source)
         if source and target:
             self.last_pair=(source,target)
