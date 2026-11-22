@@ -1,5 +1,15 @@
 # MOZKAN Live Sub — kalıcı proje hafızası
 
+## 22 Kasım 2026 — 0.4.2 kaynak çalışması (paketlenmedi)
+
+Kullanıcı sorunlu bölümlerin düzeltilmesini, ardından mantıklı yeni özelliklerin her aşamada commit'lenerek eklenmesini istedi. Başlangıç etiketi `v0.4.1` (8ab881e). Aşama commit'leri: TV kod sızıntısı ve 0.4.1 gerilemeleri (`ac35358`), `ui_error` günlüğü (`46a1c8c`), `tv_panel.py` ayrımı (`1d6b290`), genel kısayollar (`8258b14`), sözlük ve düzeltmeler (`6e695e9`), çeviri geçmişi (`c7c8bfb`), TV QR eşleştirme (`6978cc1`), oyun öncelikli seçenekler (`ae2a1e6`), en az gösterim süresi (`832b9d4`). Ayrıntılar ve sınırlar `UPDATE-0.4.2.md` içinde.
+
+- Bu çalışmada birim testleri offscreen Qt ile çalıştırıldı (221 geçti) ve kullanıcı uygulaması açılmadı. Gerçek oyun, TV, Samsung ve terim ipuçlarının model üzerindeki etkisi doğrulanmadı.
+- `APP_VERSION` ve paketleme betikleri (`package.py`, `verify-package.py`, `install-update.ps1`) hâlâ 0.4.1'de. 0.4.2 paketi istenirse sürüm numarası ve 0.4.1→0.4.2 güncelleme kuralları birlikte güncellenmeli. Eski ZIP'lerin üzerine yazma.
+- TV protokolündeki `name: 'Duplay'` bilinçli olarak korunuyor: Samsung `Duplay.wgt` bu adı ve 8 haneli hex kodu kontrol ediyor.
+- Yeni kullanıcı verisi `sozluk.json`, ayarlarla aynı klasörde.
+
+
 ## 16 Kasım 2026 — kullanıcı geliştirmeyi açıkça yeniden başlattı
 
 Kullanıcı “goal başlatıp devam et bunları yapalım her şey okey olana kadar durma” dedi. BITIRME-PLANI.md kapsamındaki uygulama ve paketleme işleri tamamlandı; kullanıcı kabulü henüz bekleniyor. Önceki otomatik geliştirme durdurma kararı bu açık istekle kaldırıldı; eski bölümlerdeki durdurma talimatları tarihsel bağlamdır. Kullanıcının testleri kendisi yapacağı tercihi değişmedi; test veya uygulama çalıştırma.
