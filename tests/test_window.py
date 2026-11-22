@@ -362,3 +362,37 @@ class DictionaryWindowTests(unittest.TestCase):
                 self.assertIsNone(window.dictionary_dialog)
             finally:
                 window.close()
+
+
+class TVQrWindowTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.app = QApplication.instance() or QApplication([])
+
+    def test_qr_carries_selected_address_and_code_and_hides_when_not_ready(self):
+        import cv2
+        import numpy as np
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QImage
+        with tempfile.TemporaryDirectory() as folder:
+            window = Window(Path(folder)/'models', settings=Settings(Path(folder)/'settings.json'))
+            try:
+                window.tv = Mock(token='0a1b2c3d', connection_info=lambda: TVInfo('192.168.1.20', 8766, 8765, 0),
+                                 pairing_remaining=lambda: 0)
+                window.tv_urls.addItem('LAN', 'http://192.168.1.20:8766/')
+                window.tv_urls.setItemData(0, True, Qt.UserRole+1)
+                window.update_tv_qr(True)
+                self.assertFalse(window.tv_qr.isHidden())
+                image = window.tv_qr.pixmap().toImage().convertToFormat(QImage.Format_Grayscale8)
+                width, height = image.width(), image.height()
+                rows = np.frombuffer(image.constBits(), np.uint8, image.bytesPerLine()*height).reshape(height, -1)
+                decoded = cv2.QRCodeDetector().detectAndDecode(np.ascontiguousarray(rows[:, :width]))[0]
+                self.assertEqual(decoded, 'http://192.168.1.20:8766/#kod=0a1b2c3d')
+                window.tv_urls.setItemData(0, False, Qt.UserRole+1)
+                window.update_tv_qr(True)
+                self.assertTrue(window.tv_qr.isHidden())
+                window.update_tv_qr(False)
+                self.assertTrue(window.tv_qr.isHidden())
+            finally:
+                window.tv = None
+                window.close()

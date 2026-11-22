@@ -3,12 +3,23 @@ import threading
 import time
 
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtGui import QDesktopServices, QImage, QPixmap
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QLabel, QPushButton,
                                QComboBox, QLineEdit, QCheckBox, QProgressBar)
 
 from presentation import ResponsiveRow
 from tv import TV
+
+
+def qr_pixmap(text, scale=6):
+    import cv2
+    matrix = cv2.QRCodeEncoder.create().encode(text)  # includes quiet zone
+    if matrix is None or matrix.ndim != 2 or not matrix.size:
+        raise ValueError('QR kodu üretilemedi.')
+    matrix = cv2.resize(matrix, (matrix.shape[1]*scale, matrix.shape[0]*scale), interpolation=cv2.INTER_NEAREST)
+    height, width = matrix.shape
+    image = QImage(matrix.tobytes(), width, height, width, QImage.Format_Grayscale8)
+    return QPixmap.fromImage(image.copy())
 
 
 class TVPanel:
@@ -57,6 +68,13 @@ class TVPanel:
         self.tv_urls.setMinimumWidth(0)
         tv_layout.addWidget(QLabel('2 · TV tarayıcısında bu adresi açın'))
         tv_layout.addWidget(self.tv_urls)
+        self.tv_qr = QLabel()
+        self.tv_qr.setAccessibleName('Bağlantı QR kodu')
+        self.tv_qr.setToolTip('Telefon veya TV kamerasıyla okutun; adres ve eşleştirme kodu birlikte açılır.')
+        self.tv_qr.hide()
+        self.tv_qr_key = None
+        tv_layout.addWidget(self.tv_qr)
+        self.tv_urls.currentIndexChanged.connect(lambda *_: self.update_tv_qr())
         self.tv_code = QLabel('—')
         self.tv_code.setTextFormat(Qt.PlainText)
         self.tv_code.setObjectName('connectionCode')
@@ -301,6 +319,29 @@ class TVPanel:
             self.tv_button.setText('TV yayınını aç')
             self.tv_urls.clear()
 
+    def update_tv_qr(self, ready=None):
+        """Show a QR of the selected receiver URL with the code in its fragment."""
+        if ready is None:
+            ready = bool(self.tv and not self.tv_closing and self.tv.connection_info() is not None)
+        url = self.tv_urls.currentData() if ready else None
+        active = ready and self.tv_urls.currentData(Qt.UserRole+1)
+        key = (url, self.tv.token) if active and isinstance(url, str) and url else None
+        if key == self.tv_qr_key:
+            return
+        self.tv_qr_key = key
+        if key is None:
+            self.tv_qr.clear()
+            self.tv_qr.hide()
+            return
+        try:
+            pixmap = qr_pixmap(url.rstrip('/') + '/#kod=' + self.tv.token)
+        except Exception:  # cv2 import/encode failure: the address and code remain usable.
+            self.tv_qr.clear()
+            self.tv_qr.hide()
+            return
+        self.tv_qr.setPixmap(pixmap)
+        self.tv_qr.show()
+
     def poll_tv(self, tv_closing):
         """Refresh TV/Samsung widgets from the periodic window poll."""
         self.tv_button.setEnabled(not tv_closing)
@@ -325,6 +366,7 @@ class TVPanel:
                                'Bağlantı durumu bilinmiyor' if self.tv else 'Bağlı alıcı: 0')
         if ready and time.monotonic()>=self.tv_address_refresh_at:
             self.update_tv_addresses(info)
+        self.update_tv_qr(ready)
         self.samsung_scan.setEnabled(not self.samsung.busy)
         self.samsung_install.setEnabled(not self.samsung.busy)
         self.samsung_cancel.setEnabled(self.samsung.busy)

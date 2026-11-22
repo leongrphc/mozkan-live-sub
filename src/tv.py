@@ -178,7 +178,12 @@ document.querySelector('#connect').onclick=()=>{
 };
 edit.onclick=()=>{generation++;clearTimeout(retry);clearCaption();clearHud();if(socket)socket.close();socket=null;pair.style.display='block';edit.style.display='none';status.textContent='Eşleştirme kodunu girin.'};
 window.addEventListener('resize',layoutHud);
-if(typeof fetch==='function')fetch('/duplay.json',{cache:'no-store'}).then(response=>{
+const linkCode=/^#kod=([0-9a-f]{8})$/.exec(typeof location.hash==='string'?location.hash:'');
+if(linkCode){
+ // QR/link pairing: the code stays in the fragment (never sent to the server) and is removed after use.
+ try{history.replaceState(null,'',location.pathname)}catch{}
+ document.querySelector('#token').value=linkCode[1];document.querySelector('#connect').onclick();
+}else if(typeof fetch==='function')fetch('/duplay.json',{cache:'no-store'}).then(response=>{
  if(!response.ok)throw new Error('Discovery unavailable');return response.json();
 }).then(data=>{
  if(generation!==0)return;
