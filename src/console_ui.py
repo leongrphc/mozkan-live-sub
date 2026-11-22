@@ -357,6 +357,7 @@ class ConsoleUI(QWidget):
     about_requested = Signal()
     appearance_requested = Signal()
     correction_requested = Signal()
+    history_requested = Signal()
 
     def __init__(self, owner, configuration, source, target, status, controls, version,game_import):
         super().__init__(owner)
@@ -517,7 +518,11 @@ class ConsoleUI(QWidget):
         self.correct.setToolTip('Son satırın Türkçesini düzeltin; aynı satır bir dahaki sefere sizin çevirinizle gösterilir.')
         self.correct.setEnabled(False)
         self.correct.clicked.connect(lambda:self.correction_requested.emit())
+        self.history_button = QPushButton('Geçmiş')
+        self.history_button.setToolTip('Bu oturumda çevrilen satırları ayrı pencerede gösterir.')
+        self.history_button.clicked.connect(lambda:self.history_requested.emit())
         secondary.addWidget(self.pause);secondary.addWidget(self.preview);secondary.addWidget(self.correct)
+        secondary.addWidget(self.history_button)
         work_layout.addLayout(secondary)
         self.details = QPushButton('Çeviri ayrıntısını göster')
         self.details.setCheckable(True)

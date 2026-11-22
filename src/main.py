@@ -44,6 +44,7 @@ from app_log import AppLog
 from presentation import ResponsiveRow,system_reduced_motion
 from tv_panel import TVPanel
 from glossary import UserDictionary
+from history import TranslationHistory,HistoryWindow
 import hotkeys
 
 APP_VERSION='0.4.1'
@@ -350,6 +351,9 @@ class Window(TVPanel, QMainWindow):
         self.hotkeys = None
         self.dictionary = UserDictionary(self.settings.path.parent/'sozluk.json')
         self.last_pair = None
+        self.history = TranslationHistory()
+        self.history_window = None
+        self.history_excluded = False
         self.dictionary_button = QPushButton('Sözlük ve düzeltmeler')
         self.dictionary_button.setToolTip('Çevrilmeyecek adlar, sabit terim karşılıkları ve kaydettiğiniz satır düzeltmeleri.')
         self.dictionary_button.clicked.connect(self.edit_dictionary)
@@ -387,6 +391,7 @@ class Window(TVPanel, QMainWindow):
         self.console.about_requested.connect(self.show_about)
         self.console.appearance_requested.connect(self.edit_appearance)
         self.console.correction_requested.connect(self.edit_correction)
+        self.console.history_requested.connect(self.open_history)
         console_scroll=QScrollArea()
         console_scroll.setWidgetResizable(True)
         console_scroll.setFrameShape(QScrollArea.NoFrame)
@@ -895,6 +900,29 @@ class Window(TVPanel, QMainWindow):
             self.status.setText('Düzeltme kaydedilemedi: '+str(exc))
             return
         self.status.setText('Düzeltme kaydedildi; bu satır bir dahaki sefere sizin çevirinizle gösterilecek.')
+
+    def open_history(self):
+        if self.closing or self._cleanup_failed:
+            return
+        if self.history_window is None:
+            window=HistoryWindow(self.history,self)
+            window.setAttribute(Qt.WA_DeleteOnClose)
+            excluded=try_capture_exclusion(window)
+            if self.capture_active() and not excluded:
+                window.deleteLater()
+                self.status.setText('Geçmiş penceresi yakalamadan dışlanamadı; görmek için önce çeviriyi durdurun.')
+                return
+            window.destroyed.connect(lambda *_,window=window:self.history_closed(window))
+            self.history_window,self.history_excluded=window,excluded
+        self.history_window.refresh()
+        self.history_window.show()
+        self.history_window.raise_()
+        self.history_window.activateWindow()
+
+    def history_closed(self,window):
+        if self.history_window is window:
+            self.history_window=None
+            self.history_excluded=False
 
     def edit_dictionary(self):
         from PySide6.QtWidgets import QTableWidget,QTableWidgetItem,QAbstractItemView,QHeaderView
@@ -1562,6 +1590,7 @@ class Window(TVPanel, QMainWindow):
         try:
             target = ensure_speaker(source,target)
             if target:
+                self.history.add(source,target)
                 self.captions.add(target)
                 if self.stacked_mode():
                     target = self.captions.current.full
@@ -1693,6 +1722,15 @@ class Window(TVPanel, QMainWindow):
         self.pause_button.setText('Devam et' if active and self.control.snapshot()[0] else 'Duraklat')
         self.reselect_button.setEnabled(not self.closing)
         self.console.correct.setEnabled(self.last_pair is not None and not self.closing)
+        if self.history_window is not None:
+            if self.capture_active() and not self.history_excluded:
+                # A window OCR could read must not stay open during capture.
+                window=self.history_window
+                window.close()
+                self.history_closed(window)
+                self.status.setText('Geçmiş penceresi yakalamadan dışlanamadığı için kapatıldı.')
+            else:
+                self.history_window.refresh()
         tv_closing = self.tv_closing
         self.poll_tv(tv_closing)
         paused=active and self.control.snapshot()[0]
@@ -1735,6 +1773,10 @@ class Window(TVPanel, QMainWindow):
         self.record_event('close_requested')
         self.closing = True
         self.release_hotkeys()
+        if self.history_window is not None:
+            window=self.history_window
+            window.close()
+            self.history_closed(window)
         self._navigation_pending=None
         self.console.preferences.hide()
         self.halt()
