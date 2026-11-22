@@ -23,6 +23,17 @@ class AppLogTests(unittest.TestCase):
                 self.assertEqual(rows[-1]['error_class'],'RuntimeError')
             finally:b.close()
 
+    def test_ui_error_records_only_component_and_class(self):
+        with tempfile.TemporaryDirectory() as folder:
+            log=AppLog(folder,'version','python')
+            try:
+                log.record('ui_error',component='tv_start',error_class='OSError')
+                with self.assertRaises(ValueError):
+                    log.record('ui_error',component='tv_start',error_class='OSError',message='port in use')
+            finally:log.close()
+            row=json.loads(log.path.read_bytes().splitlines()[-1])
+            self.assertEqual((row['event'],row['component'],row['error_class']),('ui_error','tv_start','OSError'))
+
     def test_utf8_byte_limit_keeps_file_bounded_and_marks_capacity(self):
         with tempfile.TemporaryDirectory() as folder:
             log=AppLog(folder,'test','python')

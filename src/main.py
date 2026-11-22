@@ -931,7 +931,7 @@ class Window(QMainWindow):
             try:
                 entry = self.catalog.import_profile(path)
             except Exception as exc:
-                self.events.profile_imported.emit(None, str(exc))
+                self.events.profile_imported.emit(None, exc)
             else:
                 self.events.profile_imported.emit(entry, None)
         self.import_worker = threading.Thread(target=import_profile, daemon=False)
@@ -939,6 +939,7 @@ class Window(QMainWindow):
             self.import_worker.start()
         except Exception as exc:
             self.import_busy = False
+            self.record_ui_error('profile_import_start',exc)
             self.status.setText(f'İçe aktarma başlatılamadı: {exc}')
         self.poll()
 
@@ -974,6 +975,7 @@ class Window(QMainWindow):
             self.import_worker.join()
             self.import_worker = None
         if error is not None:
+            self.record_ui_error('profile_import',error)
             self.status.setText(f'Profil içe aktarılamadı: {error}')
         elif not self.closing:
             self.refresh_profiles(entry.identity)
@@ -1041,6 +1043,7 @@ class Window(QMainWindow):
         try:
             service.start()
         except Exception as exc:
+            self.record_ui_error('tv_start',exc)
             self.tv_message(f'TV yayını açılamadı: {exc}')
             self.stop_tv()
             return
@@ -1144,7 +1147,7 @@ class Window(QMainWindow):
                 try:
                     service.close()
                 except Exception as exc:
-                    self.events.tv_closed.emit(service, str(exc))
+                    self.events.tv_closed.emit(service, exc)
                 else:
                     self.events.tv_closed.emit(service, None)
             self.tv_cleanup = threading.Thread(target=close, daemon=False)
@@ -1160,6 +1163,7 @@ class Window(QMainWindow):
             return
         self.tv_closing = False
         if error is not None:
+            self.record_ui_error('tv_stop',error)
             self.tv_stop_error = error
             self.closing = False
             self.tv_info.setText(f'TV tamamen kapanamadı: {error}')
@@ -1376,6 +1380,10 @@ class Window(QMainWindow):
 
     def record_event(self,event,**fields):
         if self.event_log is not None:self.event_log.record(event,**fields)
+
+    def record_ui_error(self,component,error):
+        kind=type(error).__name__ if isinstance(error,BaseException) else 'Error'
+        self.record_event('ui_error',component=component,error_class=kind if len(kind)<=128 and kind.isidentifier() else None)
 
     def show_about(self):
         if self.closing or self._cleanup_failed:return

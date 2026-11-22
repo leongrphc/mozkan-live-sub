@@ -9,6 +9,8 @@ FIELDS={
     'app_start':{'version','python'},'capture_start':{'session','mode','profile'},
     'stop_requested':{'session'},'capture_end':{'session'},'resource':{'session','component','status'},
     'capture_error':{'session','role','error_class'},'close_requested':set(),
+    # UI-side failures: only a component tag and exception class, never message text.
+    'ui_error':{'component','error_class'},
 }
 
 
