@@ -56,15 +56,13 @@ Kamerası olan cihazda TV sekmesindeki **QR kodu** okutmak adresi ve kodu birlik
 
 Yalnız altyazı ve görev metinleri gönderilir; oyun/video görüntüsü TV’ye aktarılmaz. Alıcı sayısı protokol bağlantılarını sayar, fiziksel TV sayısını garanti etmez. HTTP 8766 ve WebSocket 8765 portları kullanılır. Birden fazla ağ varsa doğru adresi seçin. Yayın kapanırken yeniden açılması engellenir; kapanış hatasında yeniden deneme sunulur.
 
-**Samsung** sekmesi mevcut `DuplaySamsung.exe` ve `Duplay.wgt` araçları için isteğe bağlı kurulum adaptörüdür. TV tarayıcısı ile kullanımda gerekmez. Fiziksel kurulum ve oturum yenileme henüz doğrulanmadı; hesap bağlantısı yalnız kullanıcı tıklamasıyla açılır.
+**Samsung** sekmesi isteğe bağlı Samsung TV uygulaması kurulumu içindir; gerekli yardımcı dosyalar (`samsung` klasörü) herkese açık pakette yoktur. TV tarayıcısıyla kullanımda gerekmez.
 
 ## Veriler ve güncelleme
 
 Ayar, içe aktarılan profiller ve günlükler uyumluluk için `%LOCALAPPDATA%\AltyaziAtolyesi` altında kalır. Yeni adla açılan uygulama mevcut ayarları kullanır; veri dizini taşınmaz. Ayarlar yazılırken önceki dosya yedeklenir. Başka bir işlem ayar dosyasını değiştirirse üzerine sessizce yazılmaz. Aynı anda yalnız bir normal uygulama örneği açılır.
 
 Çalışma günlüğü çalışma başına en fazla 1 MiB metadata tutar. OCR metni ve görüntü otomatik kaydedilmez. **OCR görüntüsünü kaydet** ve **Tanılamayı kaydet** elle dışa aktarır; JSON’a okunan metni eklemek ayrıca seçilir. Başlatıcı günlüğü `startup.log`, uygulama günlükleri `logs` altındadır.
-
-0.4.1’den geçiş, yedek ve geri dönüş için **GUNCELLEME.md** dosyasını okuyun. Yeni teslimin kapsamı **TESLIM-MOZKAN.md**, değişiklikleri **UPDATE-0.4.2.md** içindedir. `TESLIM.md` ve eski sürüm notları tarihsel kayıtlardır.
 
 ## Kapsam ve doğrulama sınırı
 
