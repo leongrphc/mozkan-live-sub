@@ -16,7 +16,7 @@ if destination.exists():
 for required in ('MOZKANLiveSub.exe', 'python/pythonw.exe', 'models/opus-mt-tc-big-en-tr-ct2/model.bin'):
     if not (root / required).is_file():
         raise SystemExit('Eksik paket girdisi: ' + required)
-files = [root / name for name in ('MOZKANLiveSub.exe', 'start.ps1', 'README.md', 'TESLIM.md', 'TESLIM-MOZKAN.md',
+files = [root / name for name in ('MOZKANLiveSub.exe', 'start.ps1', 'README.md', 'KULLANIM.md', 'TESLIM.md', 'TESLIM-MOZKAN.md',
                                  'GUNCELLEME.md', 'install-update.ps1', 'REBRAND.md', 'requirements.txt')]
 files.extend(root.glob('UPDATE-*.md'))
 for folder in (('src',) if args.update else ('src', 'python', 'models', 'game_profiles', 'samsung')):
